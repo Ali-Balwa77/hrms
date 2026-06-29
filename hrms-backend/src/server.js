@@ -33,32 +33,44 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-  : [];
+const allowedOrigins = [
+  "http://localhost:8000",
+  "http://localhost:5173",
+  "https://hrms-rho-sand.vercel.app",
+  ...(process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim()).filter(Boolean)
+    : []),
+];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: function (origin, callback) {
+    console.log("Request Origin:", origin);
+    console.log("Allowed Origins:", allowedOrigins);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    // Postman, mobile app, server-to-server requests
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-app.options("*", cors());
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 export const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
+    methods: ["GET", "POST"],
     credentials: true,
   },
 });
