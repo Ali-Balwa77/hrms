@@ -61,7 +61,7 @@ const ChangePasswordPage = () => {
           return;
         }
 
-        toast.error(message || "Failed to change password");
+        console.error(message || "Failed to change password");
       } finally {
         setLoading(false);
       }

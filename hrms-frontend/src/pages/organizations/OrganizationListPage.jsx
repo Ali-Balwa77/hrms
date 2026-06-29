@@ -28,7 +28,7 @@ const OrganizationListPage = () => {
       const { data } = await api.get('/organizations');
       setOrgs(Array.isArray(data) ? data : []);
     } catch (err) {
-      toast.error("Failed to load organizations");
+      console.error("Failed to load organizations");
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,7 @@ const OrganizationListPage = () => {
       toast.success('Organization deleted successfully');
       await loadOrgs();
     } catch (err) {
-      toast.error("Failed to delete organization");
+      console.error("Failed to delete organization");
     } finally {
       setLoading(false);
     }

@@ -92,7 +92,7 @@ const UserAccessList = () => {
 
   const handleRoleUpdate = async () => {
     if (!selectedUser || !selectedRole) {
-      toast.error("Please select role");
+      console.error("Please select role");
       return;
     }
 

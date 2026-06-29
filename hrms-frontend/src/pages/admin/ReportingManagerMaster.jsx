@@ -22,7 +22,6 @@ const ReportingManagerMaster = () => {
       setAllEmployees((Array.isArray(res?.data) ? res.data : (res?.data?.data || [])));
     } catch (err) {
       console.error('Failed to fetch team leads:', err);
-      // toast.error("Failed to fetch team leads");
     }
   };
 
@@ -49,7 +48,6 @@ const ReportingManagerMaster = () => {
       setEmployees((Array.isArray(res?.data) ? res.data : (res?.data?.data || [])));
     } catch (error) {
       console.error('Failed to fetch reporting employees:', error);
-      // toast.error("Failed to fetch employees");
     }
   };
 
