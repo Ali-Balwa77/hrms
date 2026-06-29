@@ -34,7 +34,7 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "https://hrms-rho-sand.vercel.app",
+  "http://localhost:8000",
   ...(process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(",").map((url) => url.trim()).filter(Boolean)
     : []),
@@ -42,9 +42,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log("Request Origin:", origin);
-    console.log("Allowed Origins:", allowedOrigins);
-
     // Postman, mobile app, server-to-server requests
     if (!origin) {
       return callback(null, true);
