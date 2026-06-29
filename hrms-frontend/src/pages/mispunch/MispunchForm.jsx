@@ -589,7 +589,7 @@ export default function MispunchForm() {
                   )
                 )
               }
-              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+              className="px-5 py-2.5 border border-slate-205 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all"
             >
               Cancel
             </button>
@@ -597,9 +597,9 @@ export default function MispunchForm() {
             {!isApproval && originalStatus === "pending" && (
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 shadow-md shadow-brand-600/10 hover:shadow-brand-600/25 transition-all duration-200"
+                className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
               >
-                Save Application
+                {isEdit ? "Update" : "Save"}
               </button>
             )}
 
@@ -609,7 +609,7 @@ export default function MispunchForm() {
                 onClick={handleDecision}
                 className="px-6 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 shadow-md shadow-brand-600/10 hover:shadow-brand-600/25 transition-all duration-200"
               >
-                Submit Decision
+                Save
               </button>
             )}
           </div>

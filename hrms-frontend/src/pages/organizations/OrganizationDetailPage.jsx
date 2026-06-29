@@ -112,15 +112,15 @@ const OrganizationDetailPage = () => {
           <button
             type="button"
             onClick={() => navigate(route(user,'/organizations'))}
-            className="px-4 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all duration-200 border border-slate-200"
+            className="px-5 py-2.5 border border-slate-205 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all"
           >
-            Back
+            Cancel
           </button>
           <button
             type="submit"
-            className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-brand-500/10 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
+            className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
           >
-            Save Changes
+            {isEdit ? "Update" : "Save"}
           </button>
         </div>
       </form>

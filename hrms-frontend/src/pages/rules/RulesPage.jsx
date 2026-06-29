@@ -166,10 +166,10 @@ const RulesPage = () => {
                 formik.resetForm();
                 setIsModalOpen(true);
               }}
-              className="group px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-semibold hover:bg-brand-700 transition-all duration-300 flex items-center gap-2 shadow-md shadow-brand-600/10 active:scale-95"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 shadow-md shadow-brand-600/10 hover:shadow-brand-600/25 transition-all duration-200"
             >
               <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-              Create Rule
+              Create Rules
             </button>
           </div>
         )}
@@ -330,7 +330,7 @@ const RulesPage = () => {
             </div>
             <div className="p-6">
               <form className="space-y-5" onSubmit={formik.handleSubmit}>
-                <FormInput label="Title" name="title" formik={formik} type={'text'} placeholder="e.g., Working Hours Policy" required />
+                <FormInput label="Title" name="title" formik={formik} type={'text'} placeholder="Enter rules & policy title" required />
                 <FormTextarea label="Content" name="content" formik={formik} rows={8} placeholder="Enter the detailed rule content here..." required />
                 <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                   <button
@@ -341,15 +341,15 @@ const RulesPage = () => {
                       setSelectedId(null);
                       formik.resetForm();
                     }}
-                    className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
+                    className="px-5 py-2.5 border border-slate-205 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-brand-600 text-white text-xs font-semibold hover:bg-brand-700 shadow-md shadow-brand-600/10 transition-all active:scale-95"
+                    className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
                   >
-                    {selectedId ? 'Update Rule' : 'Save Rule'}
+                    {selectedId ? 'Update' : 'Save'}
                   </button>
                 </div>
               </form>

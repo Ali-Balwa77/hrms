@@ -286,7 +286,7 @@ const EmployeeFormPage = () => {
             type="submit"
             className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
           >
-            Save Profile Record
+            {isEdit ? "Update" : "Save"}
           </button>
         </div>
       </form>

@@ -158,7 +158,7 @@ const ChangePasswordPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
             >
               Reset Password
             </button>

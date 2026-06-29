@@ -453,14 +453,14 @@ const LeaveCancellationForm = () => {
                         <button
                             type="button"
                             onClick={() => navigate(route(user, '/leaves/cancellation'))}
-                            className="px-3 py-2 rounded border text-sm"
+                            className="px-5 py-2.5 border border-slate-205 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all"
                         >
-                            Back
+                            Cancel
                         </button>
 
                         <button
                             type="submit"
-                            className="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-700"
+                            className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
                         >
                             Cancel Leave
                         </button>
