@@ -1,0 +1,33 @@
+export const MODULES = [
+  { key: "dashboard", label: "Dashboard", actions: ["read"] },
+  { key: "employee", label: "Employees", actions: ["create", "read", "update", "delete"] },
+  { key: "organization", label: "Organizations", actions: ["create", "read", "update", "delete"] },
+  { key: "attendance", label: "Attendance", actions: ["create", "read", "update", "delete"] },
+  { key: "mispunch", label: "Mispunch", actions: ["create", "read", "update", "delete", "approve", "reject"] },
+  { key: "punch-card", label: "Punch Card", actions: ["read"] },
+  { key: "holiday", label: "Holidays", actions: ["create", "read", "update", "delete"] },
+  { key: "rule", label: "Rules & Regulation", actions: ["create", "read", "update", "delete"] },
+  { key: "leave", label: "Leaves", actions: ["create", "read", "update", "delete", "approve", "reject"] },
+  { key: "leave-type", label: "Leave Types", actions: ["create", "read", "update", "delete"] },
+  { key: "designation", label: "Designation Master", actions: ["create", "read", "update", "delete"] },
+  { key: "role", label: "Role Management", actions: ["create", "read", "update", "delete"] },
+  { key: "user", label: "User Access Master", actions: ["read", "update"] },
+];
+
+export const FEATURES = [
+  { key: "employee_menu", label: "Show Employees menu" },
+  { key: "team_employee_list", label: "Open team employee list" },
+  { key: "reporting_manager_master", label: "Reporting Manager Master" },
+  { key: "leave_self_menu", label: "Leave application/cancellation menu" },
+  { key: "leave_approval_menu", label: "Leave approval menu" },
+  { key: "leave_cancel_approval_menu", label: "Leave cancellation approval menu" },
+  { key: "leave_type_menu", label: "Leave Type menu" },
+  { key: "quarterly_leave_policy_menu", label: "Quarterly Leave Policy menu" },
+  { key: "leave_report_menu", label: "Month Wise Leave Reports menu" },
+  { key: "designation_menu", label: "Designation Master menu" },
+  { key: "view_all_attendance", label: "View attendance for all employees" },
+  { key: "mispunch_self_menu", label: "Mispunch application menu" },
+  { key: "mispunch_approval_menu", label: "Mispunch approval menu" },
+  { key: "manage_rules", label: "Create/update/delete rules" },
+  { key: "team_leave_scope", label: "Use team leave approval scope" },
+];

@@ -1,0 +1,560 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#f8fafc] text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer components {
+  /* Premium Card Preset */
+  .card-premium {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-soft hover:shadow-premium transition-all duration-300;
+  }
+  
+  /* Modern DataTable overrides */
+  table.dataTable {
+    @apply w-full border-collapse !border-0 mb-4 !font-sans !text-[13px] text-slate-600 !mt-0 !mb-0 !important;
+  }
+
+  table.dataTable thead th {
+    @apply bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider !px-4 !py-3.5 !border-b !border-slate-100 !text-[11px] !text-left !font-sans !important;
+  }
+
+  table.dataTable tbody td {
+    @apply !px-4 !py-3 !border-b !border-slate-100 !align-middle !font-sans !text-[13px] text-slate-700 !important;
+  }
+
+  table.dataTable tbody tr {
+    @apply hover:bg-slate-50/50 transition-colors !bg-transparent !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    @apply !px-3 !py-1.5 !rounded-lg !border-0 !text-xs !font-medium !bg-slate-50 hover:!bg-brand-500 hover:!text-white transition-colors !important;
+  }
+  
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    @apply !bg-brand-600 !text-white hover:!bg-brand-700 hover:!text-white !important;
+  }
+  
+  .dataTables_wrapper .dataTables_filter input {
+    @apply !border !border-slate-200 !rounded-xl !px-3 !py-1.5 !text-sm focus:!outline-none focus:!border-brand-500 focus:!ring-1 focus:!ring-brand-500 !ml-2 !important;
+  }
+
+  .dataTables_wrapper .dataTables_length select {
+    @apply !border !border-slate-200 !rounded-xl !px-2 !py-1 focus:!outline-none focus:!border-brand-500 !mr-2 !important;
+  }
+}
+
+/* Skeleton Screens styling */
+.skeleton-pulse {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: pulse-bg 1.5s infinite;
+}
+
+@keyframes pulse-bg {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Notification Popup style */
+.notif-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  background: white;
+  color: #1e293b;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid #4f46e5;
+  border: 1px solid #f1f5f9;
+  z-index: 9999;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notif-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.notif-msg {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Switch styled */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #cbd5e1;
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+input:checked + .slider {
+  @apply bg-brand-600;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Datepicker tweaks */
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  width: 100%;
+}
+
+/* Custom styling for react-datepicker popup to match design system */
+.react-datepicker {
+  @apply !border-slate-100 !shadow-premium !rounded-xl !font-sans !overflow-hidden !important;
+}
+
+.react-datepicker__header {
+  @apply !bg-slate-50 !border-slate-100 !pt-3 !important;
+}
+
+.react-datepicker__day--selected {
+  @apply !bg-brand-600 !rounded-lg !important;
+}
+
+.react-datepicker__day:hover {
+  @apply !rounded-lg !important;
+}
+
+/* Printable Payslip Styling */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white;
+    padding: 0 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* 
+  =========================================
+  GLOBAL CONTRAST & BORDER ENHANCEMENTS
+  =========================================
+  This layer overrides extremely faint border classes 
+  to provide distinct separations for tables, cards, 
+  and layout grids. Resolves "merged layout" issues.
+*/
+.border-slate-100,
+.border-slate-50,
+.border-gray-100,
+.border-gray-50 {
+  border-color: #e2e8f0 !important; /* Solid Slate-200 border for perfect light-theme contrast */
+}
+
+.border-slate-200,
+.border-gray-200 {
+  border-color: #cbd5e1 !important; /* Slightly darker Slate-300 for prominent lines */
+}
+
+/* Elevate general table borders & header rows for ALL tables in the project */
+table,
+table.dataTable {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  margin-top: 12px !important;
+  margin-bottom: 12px !important;
+  background-color: #ffffff !important;
+}
+
+table thead,
+table.dataTable thead {
+  background-color: #f8fafc !important;
+}
+
+table thead th,
+table.dataTable thead th {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 14px 16px !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  text-align: left !important;
+}
+
+table tbody td,
+table.dataTable tbody td {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  color: #334155 !important;
+  vertical-align: middle !important;
+}
+
+table tbody tr,
+table.dataTable tbody tr {
+  background-color: transparent !important;
+  transition: background-color 150ms ease !important;
+}
+
+table tbody tr:hover,
+table.dataTable tbody tr:hover {
+  background-color: rgba(79, 70, 229, 0.025) !important; /* Elegant Indigo tint on row hover */
+}
+
+table tbody tr:last-child td,
+table.dataTable tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Card hover shadow upgrades for maximum premium SaaS aesthetics */
+.shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(226, 232, 240, 0.4) !important;
+}
+
+.bg-white.rounded-2xl {
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(226, 232, 240, 0.45) !important;
+}
+
+/* ================================
+   MODERN DATATABLE CONTROLS DESIGN
+================================ */
+
+.dt-container {
+  width: 100%;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* Top Controls Wrapper */
+.dt-container .dt-layout-row:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #f8fbff, #eef6ff);
+  border: 1px solid #dbeafe;
+  padding: 14px 16px;
+  border-radius: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+/* Entries Per Page */
+.dt-container .dt-length {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dt-container .dt-length select {
+  height: 38px;
+  min-width: 72px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0 34px 0 14px;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.dt-container .dt-length select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* Search Box */
+.dt-container .dt-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dt-container .dt-layout-end .dt-search input {
+  width: 280px;
+  height: 40px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.dt-container .dt-search input::placeholder {
+  color: #94a3b8;
+}
+
+.dt-container .dt-search input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* Bottom Controls Wrapper */
+.dt-container .dt-layout-row:last-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-top: 18px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+/* Showing Entries Text */
+.dt-container .dt-info {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Pagination */
+.dt-container .dt-paging {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dt-container .dt-layout-end .dt-paging button {
+  min-width: 38px;
+  height: 38px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dt-container .dt-paging button:hover:not(:disabled) {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+}
+
+.dt-container .dt-layout-end .dt-paging button.current {
+  border-color: #4f46e5;
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.28);
+}
+
+.dt-container .dt-paging button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+/* Table Card Design */
+.dt-container table.dataTable {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid #dbeafe;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.dt-container table.dataTable thead th {
+  background: linear-gradient(135deg, #eff6ff, #f8fafc);
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 15px 16px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+.dt-container table.dataTable tbody td {
+  padding: 15px 16px;
+  color: #0f172a;
+  font-size: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dt-container table.dataTable tbody tr {
+  transition: all 0.2s ease;
+}
+
+.dt-container table.dataTable tbody tr:hover {
+  background: #f8fbff;
+}
+
+.dt-container table.dataTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Empty Table Message */
+.dt-container table.dataTable tbody td.dt-empty,
+.dt-container .dataTables_empty {
+  padding: 28px 16px !important;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  background: #ffffff;
+}
+
+.dt-length select,
+.dataTables_length select {
+  text-align: center !important;
+  text-align-last: center !important;
+  padding-left: 8px !important;
+}
+
+/* Remove ugly default sorting spacing if needed */
+.dt-container table.dataTable thead > tr > th.dt-orderable-asc span.dt-column-order,
+.dt-container table.dataTable thead > tr > th.dt-orderable-desc span.dt-column-order {
+  opacity: 0.35;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dt-container .dt-layout-row:first-child,
+  .dt-container .dt-layout-row:last-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .dt-container .dt-length,
+  .dt-container .dt-search {
+    justify-content: space-between;
+  }
+
+  .dt-container .dt-search input {
+    width: 100%;
+  }
+
+  .dt-container .dt-paging {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .dt-container .dt-info {
+    text-align: center;
+  }
+}
+
+.role-permission-table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  background-color: #ffffff !important;
+}
+
