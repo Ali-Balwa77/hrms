@@ -20,6 +20,12 @@ const LeaveCancellationForm = () => {
     const [loading, setLoading] = useState(false);
     const [selectedLeaveId, setSelectedLeaveId] = useState('');
 
+    const getLoggedInEmployeeId = () => (
+        typeof user?.employeeId === "object"
+            ? user.employeeId?._id
+            : user?.employeeId
+    );
+
     const formatDate = (date) => {
         if (!date) return '';
 
@@ -64,9 +70,7 @@ const LeaveCancellationForm = () => {
 
                 setLeaveList(approvedLeaves);
 
-                setForwardTo(
-                    approvedLeaves[0]?.employeeId?._id
-                );
+                setForwardTo(getLoggedInEmployeeId() || '');
 
             } catch (error) {
             console.error('Request failed:', error);
@@ -84,7 +88,8 @@ const LeaveCancellationForm = () => {
 
         try {
         const res = await api.get(`/employees/${forwardTo}`);
-        setEmployeeList(res?.data?.data || res?.data || null);
+        const employee = res?.data?.data || res?.data || null;
+        setEmployeeList(employee);
         } catch (error) {
         console.error('Request failed:', error);
         }
@@ -149,8 +154,6 @@ const LeaveCancellationForm = () => {
         formik.setValues({
             ...formik.values,
 
-            forwardTo: leave.forwardTo?._id,
-
             leaveType: leave.leaveType?.code || '',
             appliedDate: formatDate(leave.appliedDate),
             from: formatDate(leave.from),
@@ -171,21 +174,54 @@ const LeaveCancellationForm = () => {
     };
 
     return (
-        <div>
+        <div className="max-w-5xl mx-auto px-4 py-8">
             {loading && <Loader />}
 
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-slate-800">
-                    Leave Cancellation
-                </h2>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+                        <span
+                            className="cursor-pointer hover:text-brand-500 transition-colors"
+                            onClick={() => navigate(route(user, '/dashboard'))}
+                        >
+                            Dashboard
+                        </span>
+                        <span>/</span>
+                        <span
+                            className="cursor-pointer hover:text-brand-500 transition-colors"
+                            onClick={() => navigate(route(user, '/leaves/cancellation'))}
+                        >
+                            Leave Cancellation
+                        </span>
+                        <span>/</span>
+                        <span className="text-slate-600 font-medium">New</span>
+                    </div>
+
+                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+                        Leave Cancellation
+                    </h1>
+                    <p className="text-xs text-slate-500 mt-1">
+                        Select an approved leave request and submit it for cancellation.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={() => navigate(route(user, '/leaves/cancellation'))}
+                    className="flex items-center gap-2 text-slate-600 bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 shadow-sm"
+                >
+                    &larr; Back to List
+                </button>
             </div>
 
-            <div className="flex justify-center items-center">
+            <div>
                 <form
-                    className="bg-white rounded shadow p-4 w-full space-y-4"
+                    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 w-full space-y-5"
                     onSubmit={formik.handleSubmit}
                 >
-                    <h2 className="text-lg font-semibold">Leave Detail</h2>
+                    <h3 className="font-semibold text-slate-800 text-base border-b border-slate-100 pb-4 mb-2">
+                        Leave Details
+                    </h3>
                     <div className="grid grid-cols-2 gap-4">
                         <FormInput
                             label="Employee"
@@ -460,7 +496,12 @@ const LeaveCancellationForm = () => {
 
                         <button
                             type="submit"
-                            className="px-6 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10"
+                            disabled={!selectedLeaveId}
+                            className={`px-6 py-2.5 text-xs font-semibold rounded-xl transition-all shadow-md shadow-brand-500/10 ${
+                                selectedLeaveId
+                                    ? "bg-brand-600 text-white hover:bg-brand-700 active:scale-[0.98]"
+                                    : "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
+                            }`}
                         >
                             Cancel Leave
                         </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -15,6 +15,8 @@ const LoginPage = () => {
   const location = useLocation();
 
   const [showPassword, setShowPassword] = useState(false);
+  const emailInputRef = useRef(null);
+  const passwordInputRef = useRef(null);
 
   const { token, user, loading } = useSelector((state) => state.auth);
   const redirectPath = '/dashboard';
@@ -41,7 +43,28 @@ const LoginPage = () => {
       const action = await dispatch(login(loginData));
 
       if (login.rejected.match(action)) {
-        formik.resetForm();
+        const errorMessage = String(action.payload || '').toLowerCase();
+
+        if (errorMessage.includes('employee not found') || errorMessage.includes('email')) {
+          emailInputRef.current?.focus();
+          setTimeout(() => {
+            formik.resetForm({
+              values: { emailOrEmployeeId: '', password: '' },
+              errors: {},
+              touched: {},
+            });
+            emailInputRef.current?.focus();
+          }, 0);
+          return;
+        }
+
+        passwordInputRef.current?.focus();
+        setTimeout(() => {
+          formik.setFieldValue('password', '', false);
+          formik.setErrors({});
+          formik.setFieldTouched('password', false, false);
+          passwordInputRef.current?.focus();
+        }, 0);
         return;
       }
 
@@ -64,7 +87,7 @@ const LoginPage = () => {
         {/* Header Branding */}
         <div className="flex flex-col items-center text-center mb-8">
             <img
-              src="/hrms-mark.svg"
+              src="/dp/hrms/hrms-mark.svg"
               alt="HRMS Logo"
               className="block h-20 sm:h-24 md:h-28 w-auto object-contain"
             />
@@ -81,6 +104,7 @@ const LoginPage = () => {
             name="emailOrEmployeeId"
             formik={formik}
             type="text"
+            inputRef={emailInputRef}
             required
           />
           <div>
@@ -90,6 +114,8 @@ const LoginPage = () => {
                 name="password"
                 formik={formik}
                 type={showPassword ? "text" : "password"}
+                inputRef={passwordInputRef}
+                trailingSpace
                 required
               />
 
@@ -97,6 +123,7 @@ const LoginPage = () => {
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-[35px] text-slate-400 hover:text-brand-600 transition-colors focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <FiEye className="w-4 h-4" />

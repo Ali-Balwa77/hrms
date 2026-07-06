@@ -63,7 +63,7 @@ const ResetPasswordPage = () => {
         {/* Header Branding */}
         <div className="flex flex-col items-center text-center mb-6">
           <img
-            src="/hrms-mark.svg"
+            src="/dp/hrms/hrms-mark.svg"
             alt="HRMS Logo"
             className="block h-20 sm:h-24 md:h-28 w-auto object-contain"
           />
@@ -82,6 +82,7 @@ const ResetPasswordPage = () => {
               name="newPassword"
               formik={formik}
               type={showPassword.newPassword ? "text" : "password"}
+              trailingSpace
               required
             />
 
@@ -89,6 +90,7 @@ const ResetPasswordPage = () => {
               type="button"
               onClick={() => togglePassword("newPassword")}
               className="absolute right-3 top-[35px] text-slate-400 hover:text-brand-600 transition-colors focus:outline-none"
+              aria-label={showPassword.newPassword ? "Hide password" : "Show password"}
             >
               {showPassword.newPassword ? (
                 <FiEye className="w-4 h-4" />
@@ -104,6 +106,7 @@ const ResetPasswordPage = () => {
               name="confirmPassword"
               formik={formik}
               type={showPassword.confirmPassword ? "text" : "password"}
+              trailingSpace
               required
             />
 
@@ -111,6 +114,7 @@ const ResetPasswordPage = () => {
               type="button"
               onClick={() => togglePassword("confirmPassword")}
               className="absolute right-3 top-[35px] text-slate-400 hover:text-brand-600 transition-colors focus:outline-none"
+              aria-label={showPassword.confirmPassword ? "Hide password" : "Show password"}
             >
               {showPassword.confirmPassword ? (
                 <FiEye className="w-4 h-4" />

@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
-import PermissionGuard from '../../components/auth/PermissionGuard.jsx';
 import { hasPermission } from '../../utils/permissions.js';
 import { route } from '../../utils/routeHelper.js';
 import Loader from '../../components/common/Loader.jsx';
@@ -47,6 +46,28 @@ const cleanPunches = (punches = []) => {
   return Array.from(map.values());
 };
 
+const normalizeRoleName = (value = "") =>
+  String(value).toLowerCase().trim().replace(/[^a-z0-9]+/g, "");
+
+const parseAttendanceDate = (value) => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const rawValue = String(value).trim();
+  const ddmmyyyy = rawValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const parsed = new Date(rawValue);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const EmployeeDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -66,28 +87,31 @@ const EmployeeDashboard = () => {
 
   const [loading, setLoading] = useState(false);
   const [punchLoading, setPunchLoading] = useState(false);
+  const roleName = normalizeRoleName(user?.role?.name || user?.employeeType);
+  const isTeamLeadDashboard = roleName === "teamlead";
+  const isSelfDashboardRole = ["employee", "teamlead", "intern"].includes(roleName);
 
   const access = React.useMemo(() => ({
     employee: {
       read: hasPermission(user, "employee", "read"),
     },
     leave: {
-      read: hasPermission(user, "leave", "read"),
-      create: hasPermission(user, "leave", "create"),
+      read: isSelfDashboardRole || hasPermission(user, "leave", "read"),
+      create: isSelfDashboardRole || hasPermission(user, "leave", "create"),
       approve: hasPermission(user, "leave", "approve"),
       reject: hasPermission(user, "leave", "reject"),
     },
     attendance: {
-      read: hasPermission(user, "attendance", "read"),
-      create: hasPermission(user, "attendance", "create"),
+      read: isSelfDashboardRole || hasPermission(user, "attendance", "read"),
+      create: isSelfDashboardRole || hasPermission(user, "attendance", "create"),
     },
     holiday: {
-      read: hasPermission(user, "holiday", "read"),
+      read: isSelfDashboardRole || hasPermission(user, "holiday", "read"),
     },
     rule: {
-      read: hasPermission(user, "rule", "read"),
+      read: isSelfDashboardRole || hasPermission(user, "rule", "read"),
     },
-  }), [user]);
+  }), [isSelfDashboardRole, user]);
 
   const getDashboardData = (result) => {
     if (result.status !== "fulfilled") return [];
@@ -119,10 +143,14 @@ const EmployeeDashboard = () => {
     const year = now.getFullYear();
     const month = now.getMonth();
 
-    const joinDate = new Date(employee?.joinDate);
     const monthStart = new Date(year, month, 1);
-    const startDate = joinDate > monthStart ? joinDate : monthStart;
-    const monthEnd = new Date(year, month + 1, 0);
+    const joinDate = new Date(employee?.joinDate);
+    const startDate =
+      !Number.isNaN(joinDate.getTime()) && joinDate > monthStart
+        ? joinDate
+        : monthStart;
+    startDate.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
     let totalDays = 0;
     let weekends = 0;
@@ -146,12 +174,24 @@ const EmployeeDashboard = () => {
       );
     }).length;
 
-    let workingDays = totalDays - weekends - holidayCount;
-    workingDays++;
+    const workingDays = Math.max(totalDays - weekends - holidayCount, 0);
 
-    const presentDays = attendanceData.filter(
-      (a) => a.punches?.some((p) => p.in || p.out)
-    ).length;
+    const presentDays = new Set(
+      attendanceData
+        .filter((a) => {
+          const attendanceDate = parseAttendanceDate(a.date);
+          if (!attendanceDate) return false;
+
+          return (
+            attendanceDate >= startDate &&
+            attendanceDate <= monthEnd &&
+            attendanceDate.getFullYear() === year &&
+            attendanceDate.getMonth() === month &&
+            a.punches?.some((p) => p.in || p.out)
+          );
+        })
+        .map((a) => a.date)
+    ).size;
 
     const percentage =
       workingDays > 0
@@ -235,8 +275,20 @@ const EmployeeDashboard = () => {
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .slice(0, 5);
 
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth();
       const leave = leaves.filter(l => isSameEmployee(l.employeeId, user.employeeId)).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const recentAttendance = attendances.slice(0, 5);
+      const recentAttendance = attendances
+        .filter((attendanceItem) => {
+          const attendanceDate = parseAttendanceDate(attendanceItem.date);
+          return (
+            attendanceDate &&
+            attendanceDate.getFullYear() === currentYear &&
+            attendanceDate.getMonth() === currentMonth
+          );
+        })
+        .sort((a, b) => parseAttendanceDate(b.date) - parseAttendanceDate(a.date))
+        .slice(0, 5);
 
       setDashboardData((prev) => ({
         ...prev,
@@ -430,7 +482,9 @@ const EmployeeDashboard = () => {
       {/* Header Greeting panel */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-soft">
         <div>
-          <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest bg-brand-50 px-2.5 py-1 rounded-full">Employee Hub</span>
+          <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest bg-brand-50 px-2.5 py-1 rounded-full">
+            {roleName === "teamlead" ? "Team Lead Hub" : "Employee Hub"}
+          </span>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight mt-2.5">Hello, {user?.name || 'Team Member'}</h1>
           <p className="text-xs text-slate-400 mt-1">Have a productive day! Check your attendance logs and balances below.</p>
         </div>
@@ -449,7 +503,7 @@ const EmployeeDashboard = () => {
         
         {/* KPI Cards wrapper */}
         <div className="lg:col-span-2 space-y-5">
-          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5`}>
+          <div className={`grid grid-cols-1 ${isTeamLeadDashboard ? "md:grid-cols-3" : "sm:grid-cols-2"} gap-5`}>
             {statsArray.map((stat, index) => {
               const Icon = stat.icon;
               return (
@@ -482,7 +536,7 @@ const EmployeeDashboard = () => {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <PermissionGuard module="leave" action="create">
+              {access.leave.create && (
                 <Link
                   to={route(user, "/leaves/new")}
                   className="group bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
@@ -502,9 +556,9 @@ const EmployeeDashboard = () => {
                     </div>
                   </div>
                 </Link>
-              </PermissionGuard>
+              )}
 
-              <PermissionGuard module="holiday" action="read">
+              {access.holiday.read && (
               <Link
                 to={route(user, "/holidays")}
                 className="group bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
@@ -524,9 +578,9 @@ const EmployeeDashboard = () => {
                   </div>
                 </div>
               </Link>
-              </PermissionGuard>
+              )}
 
-              <PermissionGuard module="rule" action="read">
+              {access.rule.read && (
               <Link
                 to={route(user, "/rules")}
                 className="group bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
@@ -546,7 +600,7 @@ const EmployeeDashboard = () => {
                   </div>
                 </div>
               </Link>
-              </PermissionGuard>
+              )}
             </div>
           </div>
         </div>
@@ -589,7 +643,8 @@ const EmployeeDashboard = () => {
           </div>
 
           <div className="space-y-2.5 mt-2">
-            <PermissionGuard module="attendance" action="create">
+            {access.attendance.create && (
+              <>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={handleCheckIn}
@@ -648,7 +703,8 @@ const EmployeeDashboard = () => {
                   Lunch In
                 </button>
               </div>
-            </PermissionGuard>
+              </>
+            )}
           </div>
         </div>
       </div>

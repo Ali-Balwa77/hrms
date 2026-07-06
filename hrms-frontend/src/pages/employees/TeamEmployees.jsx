@@ -117,42 +117,6 @@ const TeamEmployees = () => {
         </div>
       </div>
 
-      {/* Dynamic Metric Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        {/* Metric 1 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all duration-300">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-            <FiUsers className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Team Strength</p>
-            <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{totalTeamSize}</h3>
-          </div>
-        </div>
-
-        {/* Metric 2 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all duration-300">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-            <FiLayers className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Departments</p>
-            <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{uniqueDepts}</h3>
-          </div>
-        </div>
-
-        {/* Metric 3 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all duration-300">
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
-            <FiCheckSquare className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Unique Roles</p>
-            <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{activeRoles}</h3>
-          </div>
-        </div>
-      </div>
-
       {/* Table Container */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
         <DataTable

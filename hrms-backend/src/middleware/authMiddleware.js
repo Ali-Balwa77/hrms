@@ -76,13 +76,6 @@ export const protect = async (req, res, next) => {
         "TokenExpired"
       );
     }
-
-    // return errorResponse(
-    //   res,
-    //   401,
-    //   "Invalid session. Please login again.",
-    //   "InvalidToken"
-    // );
   }
 };
 

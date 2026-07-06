@@ -10,19 +10,28 @@ import {
   updateLeaveType,
 } from '../controllers/leaveTypeController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { checkAnyPermission, checkPermission } from '../middleware/permission.js';
 
 const router = express.Router();
 router.use(protect);
 
-router.post('/', asyncRoute(createLeaveType));
-router.get('/', asyncRoute(getLeaveTypes));
-router.get('/all', asyncRoute(getAllLeaveTypes));
+router.post('/', checkPermission("leave-type", "create"), asyncRoute(createLeaveType));
+router.get(
+  '/',
+  checkAnyPermission([
+    { module: "leave-type", action: "read" },
+    { module: "leave", action: "create" },
+    { module: "leave", action: "read" },
+  ]),
+  asyncRoute(getLeaveTypes)
+);
+router.get('/all', checkPermission("leave-type", "read"), asyncRoute(getAllLeaveTypes));
 // router.get(
 //   "/leave-balance/:employeeId/:leaveTypeId",
 //   asyncRoute(getLeaveBalance)
 // );
-router.get('/:id', asyncRoute(getLeaveTypeById));
-router.patch('/:id', asyncRoute(updateLeaveType));
-router.delete('/:id', asyncRoute(deleteLeaveType));
+router.get('/:id', checkPermission("leave-type", "read"), asyncRoute(getLeaveTypeById));
+router.patch('/:id', checkPermission("leave-type", "update"), asyncRoute(updateLeaveType));
+router.delete('/:id', checkPermission("leave-type", "delete"), asyncRoute(deleteLeaveType));
 
 export default router;

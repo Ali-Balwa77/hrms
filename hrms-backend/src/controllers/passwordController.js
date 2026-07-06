@@ -22,7 +22,7 @@ export const forgotPassword = async (req, res) => {
  
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 5 * 60 * 1000; 
+    user.resetPasswordExpires = undefined;
     
     const resetUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
     await sendEmail(email, employee.firstName, 'reset_password', { resetUrl });
@@ -39,13 +39,10 @@ export const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
-    });
+    const user = await User.findOne({ resetPasswordToken: token });
   
     if (!user) {
-      return sendResponse(res, 400, 'Expired or invalid reset links.', null, {});
+      return sendResponse(res, 400, 'Invalid reset link.', null, {});
     }
 
     user.password = password;
@@ -59,4 +56,3 @@ export const resetPassword = async (req, res) => {
     sendResponse(res, 500, error?.message || 'Internal server error', null, {});
   }
 };
-

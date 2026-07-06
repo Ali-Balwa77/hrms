@@ -11,6 +11,8 @@ const FormInput = ({
   type,
   disabled,
   placeholder,
+  inputRef,
+  trailingSpace = false,
   allowWeekends = false,
   showMonthYearDropdown = true,
 }) => {
@@ -30,6 +32,7 @@ const FormInput = ({
   };
 
   const isError = formik.errors[name] && formik.touched[name];
+  const fieldValue = formik.values[name] || '';
 
   // Intelligent Contextual Placeholder Generator
   const computedPlaceholder = placeholder || (() => {
@@ -100,18 +103,21 @@ const FormInput = ({
         </div>
       ) : (
         <input
+          ref={inputRef}
           type={type}
           name={name}
-          value={formik.values[name] || ''}
+          value={fieldValue}
           onChange={!disabled ? handleInputChange : undefined}
           onBlur={formik.handleBlur}
           disabled={disabled}
           placeholder={computedPlaceholder}
-          className={`w-full bg-white border border-slate-200 text-slate-800 text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all duration-200 ${
+          title={typeof fieldValue === "string" ? fieldValue : ""}
+          className={`w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap bg-white border border-slate-200 text-slate-800 text-sm py-2.5 pl-4 ${trailingSpace ? "pr-12" : "pr-4"} rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all duration-200 ${
             isError
               ? "border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50/10"
               : "hover:border-slate-300"
           } disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-100 disabled:cursor-not-allowed`}
+          style={{ textOverflow: "ellipsis" }}
         />
       )}
 
@@ -125,4 +131,3 @@ const FormInput = ({
 };
 
 export default FormInput;
-

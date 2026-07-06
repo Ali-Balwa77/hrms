@@ -70,11 +70,11 @@ const RoleList = () => {
     const isSelected = statusFilter === type;
 
     const activeStyles = {
-      all: "border-indigo-500 bg-indigo-50/70 ring-2 ring-indigo-200 shadow-lg shadow-indigo-100/70",
+      all: "border-indigo-500 bg-indigo-100 ring-2 ring-indigo-200 shadow-lg shadow-indigo-100/70",
       active:
-        "border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200 shadow-lg shadow-emerald-100/70",
+        "border-emerald-600 bg-emerald-200 ring-2 ring-emerald-300 shadow-lg shadow-emerald-200/80",
       inactive:
-        "border-rose-500 bg-rose-50/70 ring-2 ring-rose-200 shadow-lg shadow-rose-100/70",
+        "border-rose-500 bg-rose-100 ring-2 ring-rose-200 shadow-lg shadow-rose-100/70",
     };
 
     const hoverStyles = {
@@ -218,10 +218,6 @@ const RoleList = () => {
           onClick={() => setStatusFilter("all")}
           className={getMetricCardClass("all")}
         >
-          {statusFilter === "all" && (
-            <span className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-indigo-600 shadow-sm" />
-          )}
-
           <div className={getMetricIconClass("all")}>
             <FiShield className="w-5 h-5" />
           </div>
@@ -238,10 +234,6 @@ const RoleList = () => {
           onClick={() => setStatusFilter("active")}
           className={getMetricCardClass("active")}
         >
-          {statusFilter === "active" && (
-            <span className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-emerald-600 shadow-sm" />
-          )}
-
           <div className={getMetricIconClass("active")}>
             <FiCheckCircle className="w-5 h-5" />
           </div>
@@ -258,10 +250,6 @@ const RoleList = () => {
           onClick={() => setStatusFilter("inactive")}
           className={getMetricCardClass("inactive")}
         >
-          {statusFilter === "inactive" && (
-            <span className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-rose-600 shadow-sm" />
-          )}
-
           <div className={getMetricIconClass("inactive")}>
             <FiXCircle className="w-5 h-5" />
           </div>

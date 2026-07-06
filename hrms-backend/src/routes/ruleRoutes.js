@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(protect);
  
 
-router.route('/bulk-delete').post(asyncRoute(deleteMultipleRules));
+router.route('/bulk-delete').post(checkPermission("rule", "delete"), asyncRoute(deleteMultipleRules));
  
 router
   .route('/')

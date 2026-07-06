@@ -41,12 +41,16 @@ export const createLeaveCancellation = async (req, res) => {
       return sendResponse(res, 404, "Leave not found", null, {});
     }
 
+    const loginEmployeeId = req.user.employeeId || req.body.employeeId;
+    const employee = await Employee.findById(loginEmployeeId).select("leaveForwardTo");
+    const currentForwardTo = employee?.leaveForwardTo?.[0] || leave.forwardTo;
+
     const leaveCancelData = {
       ...req.body,
-      employeeId: req.user.employeeId || req.body.employeeId,
+      employeeId: loginEmployeeId,
 
-      // જો cancellation form mathi forwardTo na aave to original leave na forwardTo use karo
-      forwardTo: req.body.forwardTo || leave.forwardTo,
+      // If form does not send an approver, use employee's current leaveForwardTo.
+      forwardTo: req.body.forwardTo || currentForwardTo,
     };
 
     const cancellation = new LeaveCancellation(leaveCancelData);

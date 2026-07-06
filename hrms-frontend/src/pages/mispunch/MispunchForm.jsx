@@ -63,6 +63,18 @@ const getCurrentEmployeeId = (user) =>
 const getEmployeeIdFromRecord = (employee) =>
   String(employee?._id || employee || "");
 
+const getUserDisplayName = (userValue) => {
+  if (!userValue) return "-";
+  if (typeof userValue === "string") return userValue;
+
+  return (
+    userValue.name ||
+    userValue.email ||
+    userValue.empID ||
+    "-"
+  );
+};
+
 const isHrUser = (user) =>
   String(user?.role?.name || user?.employeeId?.employeeType || user?.employeeType || "")
     .toLowerCase()
@@ -151,6 +163,8 @@ export default function MispunchForm() {
             remarks: data.remarks || "",
             mispunchOccurs: data.mispunchOccurs || "post",
             sanctionRemarks: data.sanctionRemarks || "",
+            sanctionedBy: getUserDisplayName(data.sanctionedBy),
+            sanctionOn: data.sanctionOn ? formatDateDisplay(data.sanctionOn) : "",
             status: isApproval ? "" : data.status || "pending",
           });
         } else {
@@ -189,6 +203,8 @@ export default function MispunchForm() {
       remarks: "",
       mispunchOccurs: "post",
       sanctionRemarks: "",
+      sanctionedBy: "",
+      sanctionOn: "",
       status: "",
     },
     enableReinitialize: true,
@@ -230,6 +246,8 @@ export default function MispunchForm() {
   });
 
   const readOnly = isApproval || (isEdit && formik.values.status !== "pending");
+  const showSanctionDetails =
+    isEdit && !isApproval && originalStatus === "approved";
 
   const handleDecision = async () => {
     try {
@@ -396,9 +414,7 @@ export default function MispunchForm() {
               type="date" 
               required 
               disabled={readOnly} 
-              allowWeekends={true} 
             />
-
 
             <div className="mb-4">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
@@ -572,6 +588,47 @@ export default function MispunchForm() {
                     {formik.errors.status}
                   </p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {showSanctionDetails && (
+            <div className="border-t border-slate-100 pt-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-slate-800 text-base">
+                  Sanction Details
+                </h3>
+                <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  {formik.values.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5">
+                <FormInput
+                  label="Sanction By"
+                  name="sanctionedBy"
+                  formik={formik}
+                  type="text"
+                  disabled
+                />
+
+                <FormInput
+                  label="Sanction Date"
+                  name="sanctionOn"
+                  formik={formik}
+                  type="text"
+                  disabled
+                />
+
+                <div className="md:col-span-2">
+                  <FormInput
+                    label="Sanction Remarks"
+                    name="sanctionRemarks"
+                    formik={formik}
+                    type="text"
+                    disabled
+                  />
+                </div>
               </div>
             </div>
           )}

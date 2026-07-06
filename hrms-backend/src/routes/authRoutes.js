@@ -2,7 +2,6 @@ import express from 'express';
 import asyncRoute from '../middleware/asyncRoute.js';
 import { changePassword, login, profile, updateProfile } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { loginLimiter } from '../middleware/loginLimiter.js';
 
 const router = express.Router();
 
@@ -12,4 +11,3 @@ router.patch('/updateProfile', protect, asyncRoute(updateProfile));
 router.patch('/change-password', protect, asyncRoute(changePassword));
 
 export default router;
-

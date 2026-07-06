@@ -58,6 +58,49 @@ const AttendanceReportPage = () => {
     return Boolean(leftId && rightId && String(leftId) === String(rightId));
   };
 
+  const getLoggedInEmployeeOption = () => {
+    const employee = user?.employeeId;
+    const employeeId = getId(employee);
+
+    if (!employeeId) return null;
+
+    const nameParts =
+      typeof employee === "object"
+        ? {
+            firstName: employee.firstName || user?.name?.split(" ")?.[0] || "",
+            lastName:
+              employee.lastName ||
+              user?.name?.split(" ")?.slice(1).join(" ") ||
+              "",
+          }
+        : {
+            firstName: user?.name?.split(" ")?.[0] || "Self",
+            lastName: user?.name?.split(" ")?.slice(1).join(" ") || "",
+          };
+
+    return {
+      _id: employeeId,
+      employeeNo:
+        employee?.employeeNo || user?.empID || user?.employeeNo || "Self",
+      firstName: nameParts.firstName,
+      lastName: nameParts.lastName,
+      officeEmail: employee?.officeEmail || user?.email || "",
+      status: "active",
+      isSelf: true,
+    };
+  };
+
+  const includeLoggedInEmployee = (employeeList = []) => {
+    const selfEmployee = getLoggedInEmployeeOption();
+    if (!selfEmployee) return employeeList;
+
+    const withoutDuplicate = employeeList.filter(
+      (employee) => !isSameId(employee, selfEmployee._id)
+    );
+
+    return [selfEmployee, ...withoutDuplicate];
+  };
+
   const isMappedToCurrentTL = (employee) => {
     const tlId = getId(user?.employeeId);
     if (!employee || !tlId) return false;
@@ -99,7 +142,11 @@ const AttendanceReportPage = () => {
 
       if (canViewTeamAttendance) {
         const teamEmployees = activeEmployees.filter(isMappedToCurrentTL);
-        setEmployees(teamEmployees.length > 0 ? teamEmployees : activeEmployees);
+        setEmployees(
+          includeLoggedInEmployee(
+            teamEmployees.length > 0 ? teamEmployees : activeEmployees
+          )
+        );
       } else {
         setEmployees(activeEmployees);
       }
@@ -478,8 +525,6 @@ const AttendanceReportPage = () => {
   };
 
   const getWorkingHours = (item) => {
-    console.log(item.totalHours,'hours');
-    
     return item.totalHours || "00:00:00";
   };
 
@@ -542,9 +587,9 @@ const AttendanceReportPage = () => {
               <button
                 type="button"
                 onClick={handleEmployeeDropdownToggle}
-                className="w-full text-left bg-white border border-slate-200 text-slate-800 text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all duration-200 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.65rem_auto] bg-[right_1rem_center] bg-no-repeat"
+                className="w-full min-w-0 text-left bg-white border border-slate-200 text-slate-800 text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all duration-200 appearance-none flex items-center bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.65rem_auto] bg-[right_1rem_center] bg-no-repeat"
               >
-                <span className="truncate">
+                <span className="block min-w-0 flex-1 truncate pr-6">
                   {selectedEmployeeData
                     ? `${selectedEmployeeData.employeeNo} - ${selectedEmployeeData.firstName} ${selectedEmployeeData.lastName}`
                     : "Select Employee"}
@@ -590,7 +635,8 @@ const AttendanceReportPage = () => {
                             setEmployeeSearch("");
                             setReport([]);
                           }}
-                          className="px-4 py-2.5 cursor-pointer hover:bg-slate-50 text-xs text-slate-700 font-medium"
+                          className="truncate px-4 py-2.5 cursor-pointer hover:bg-slate-50 text-xs text-slate-700 font-medium"
+                          title={`${emp.employeeNo} - ${emp.firstName} ${emp.lastName}`}
                         >
                           {emp.employeeNo} - {emp.firstName} {emp.lastName}
                         </div>

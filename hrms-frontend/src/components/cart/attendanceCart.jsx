@@ -48,19 +48,26 @@ const AttendanceChart = ({
     return { present, leave, absent, totalEmployees };
   }, [attendanceData, leavesData, employeeData]);
 
+  const chartSegments = [
+    { label: "Present", value: chartDataValues.present, color: "#22c55e" },
+    { label: "Leave", value: chartDataValues.leave, color: "#facc15" },
+    { label: "Absent", value: chartDataValues.absent, color: "#ef4444" },
+  ].filter((item) => item.value > 0);
+
+  const visibleSegments =
+    chartSegments.length > 0
+      ? chartSegments
+      : [{ label: "No Data", value: 1, color: "#e2e8f0" }];
+
   const data = {
-    labels: ["Present", "Leave", "Absent"],
+    labels: visibleSegments.map((item) => item.label),
     datasets: [
       {
-        data: [
-          chartDataValues.present,
-          chartDataValues.leave,
-          chartDataValues.absent,
-        ],
-        backgroundColor: ["#22c55e", "#facc15", "#ef4444"],
+        data: visibleSegments.map((item) => item.value),
+        backgroundColor: visibleSegments.map((item) => item.color),
         borderColor: "#ffffff",
-        borderWidth: 3,
-        hoverOffset: 6,
+        borderWidth: chartSegments.length > 1 ? 3 : 0,
+        hoverOffset: chartSegments.length > 1 ? 6 : 0,
       },
     ],
   };
@@ -78,7 +85,10 @@ const AttendanceChart = ({
         bodyColor: "#ffffff",
         padding: 10,
         cornerRadius: 10,
-        displayColors: true,
+        displayColors: false,
+        callbacks: {
+          label: (context) => `${context.label}: ${context.parsed}`,
+        },
       },
     },
   };

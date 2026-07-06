@@ -93,6 +93,7 @@ const ChangePasswordPage = () => {
                 name="oldPassword"
                 formik={formik}
                 type={showPassword.oldPassword ? "text" : "password"}
+                trailingSpace
                 required
               />
 
@@ -100,6 +101,7 @@ const ChangePasswordPage = () => {
                 type="button"
                 onClick={() => togglePassword("oldPassword")}
                 className="absolute right-3 top-[35px] text-slate-400 hover:text-brand-600 transition-colors focus:outline-none"
+                aria-label={showPassword.oldPassword ? "Hide password" : "Show password"}
               >
                 {showPassword.oldPassword ? (
                   <FiEye className="w-4 h-4" />
@@ -115,6 +117,7 @@ const ChangePasswordPage = () => {
                 name="newPassword"
                 formik={formik}
                 type={showPassword.newPassword ? "text" : "password"}
+                trailingSpace
                 required
               />
 
@@ -122,6 +125,7 @@ const ChangePasswordPage = () => {
                 type="button"
                 onClick={() => togglePassword("newPassword")}
                 className="absolute right-3 top-[35px] text-slate-400 hover:text-brand-600 transition-colors focus:outline-none"
+                aria-label={showPassword.newPassword ? "Hide password" : "Show password"}
               >
                 {showPassword.newPassword ? (
                   <FiEye className="w-4 h-4" />
@@ -137,6 +141,7 @@ const ChangePasswordPage = () => {
                 name="confirmPassword"
                 formik={formik}
                 type={showPassword.confirmPassword ? "text" : "password"}
+                trailingSpace
                 required
               />
 
@@ -144,6 +149,7 @@ const ChangePasswordPage = () => {
                 type="button"
                 onClick={() => togglePassword("confirmPassword")}
                 className="absolute right-3 top-[35px] text-slate-400 hover:text-brand-600 transition-colors focus:outline-none"
+                aria-label={showPassword.confirmPassword ? "Hide password" : "Show password"}
               >
                 {showPassword.confirmPassword ? (
                   <FiEye className="w-4 h-4" />

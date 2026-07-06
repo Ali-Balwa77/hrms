@@ -223,7 +223,10 @@ const LeaveRequestEmployee = () => {
       data: null,
       render: (data) =>
         `<button class="view-approval p-2 text-indigo-600 hover:text-white hover:bg-indigo-600 rounded-xl transition-all duration-200 border border-indigo-100 hover:border-indigo-600 bg-indigo-50 shadow-sm inline-flex items-center justify-center" data-id="${data._id}" title="Review Approval">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.3">
+            <polyline points="9 11 12 14 22 4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
         </button>`
     }] : [])
   ];
@@ -243,7 +246,7 @@ const LeaveRequestEmployee = () => {
       </div>
 
       {/* Metric Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         {/* Metric 1 */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all duration-300">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
@@ -263,17 +266,6 @@ const LeaveRequestEmployee = () => {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Casual & Personal Requests</p>
             <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{casualOrPersonalCount}</h3>
-          </div>
-        </div>
-
-        {/* Metric 3 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-all duration-300">
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
-            <FiAlertCircle className="w-5 h-5 animate-bounce-slow" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sick & Medical Requests</p>
-            <h3 className="text-2xl font-bold text-slate-800 mt-0.5">{sickLeavesCount}</h3>
           </div>
         </div>
       </div>

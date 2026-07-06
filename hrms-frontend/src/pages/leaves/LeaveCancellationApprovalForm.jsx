@@ -130,8 +130,7 @@ const LeaveCancellationApprovalForm = () => {
                 setLoading(true);
 
                 const res = await api.patch(`/leave-cancel/${id}/approve`, values);
-                console.log(res,'data');
-                
+
                 toast.success(
                     res.apiMessage
                 );
@@ -173,7 +172,7 @@ const LeaveCancellationApprovalForm = () => {
           onClick={() => navigate(route(user, '/leaves/leave-requests-cancel'))}
           className="flex items-center gap-2 text-slate-600 bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 shadow-sm"
         >
-          &larr; Back to Requests
+          &larr; Back to List
         </button>
       </div>
 

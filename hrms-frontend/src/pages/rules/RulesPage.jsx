@@ -280,7 +280,7 @@ const RulesPage = () => {
                     className="group/btn text-[10px] font-bold text-brand-600 mt-4 hover:text-brand-800 transition-all duration-300 uppercase tracking-widest flex items-center gap-2"
                   >
                     <span className="relative">
-                      {isExpanded ? 'Show Less' : 'Read More'}
+                      {isExpanded ? 'Read Less' : 'Read More'}
                       <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-brand-600/20 rounded-full"></span>
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand-600 rounded-full transition-all duration-300 group-hover/btn:w-full"></span>
                     </span>
@@ -321,7 +321,9 @@ const RulesPage = () => {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200 active:scale-95"
+                title="Close"
+                aria-label="Close modal"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -34,7 +34,8 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
-  "http://localhost:8000",
+  'http://localhost:8000',
+  'http://192.168.0.137:8000',
   ...(process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(",").map((url) => url.trim()).filter(Boolean)
     : []),
@@ -131,7 +132,7 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-app.get('/', (req, res) => sendResponse(res, 200, 'HRMS API running', { status: 'ok' }, {}));
+app.get('/api', (req, res) => sendResponse(res, 200, 'HRMS API running', { status: 'ok' }, {}));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);

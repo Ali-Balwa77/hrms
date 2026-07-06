@@ -108,27 +108,48 @@ const HRDashboard = () => {
     return () => clearInterval(clockInterval);
   }, [user?.employeeId]);
 
-  const getAvgLeavePerMonth = (leaves) => {
+  const getAvgLeavePerMonth = (leaves, employeeCount = 0) => {
     let totalDays = 0;
     const uniqueMonths = new Set();
 
     leaves.forEach(leave => {
       const start = new Date(leave.from);
       const end = new Date(leave.to);
+
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+        return;
+      }
+
       const days = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
       totalDays += days;
       const monthKey = start.getFullYear() + "-" + (start.getMonth() + 1);
       uniqueMonths.add(monthKey);
     });
 
-    const avg = uniqueMonths.size ? totalDays / uniqueMonths.size : 0;
+    const avg = uniqueMonths.size && employeeCount
+      ? totalDays / uniqueMonths.size / employeeCount
+      : 0;
+
     return avg.toFixed(1);
   };
 
-  const parseAttendanceDate = (dateString) => {
-    if (!dateString) return new Date(0);
-    const [day, month, year] = dateString.split('/').map(Number);
-    return new Date(year, month - 1, day);
+  const parseAttendanceDate = (value) => {
+    if (!value) return null;
+
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    const rawValue = String(value).trim();
+    const ddmmyyyy = rawValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+    if (ddmmyyyy) {
+      const [, day, month, year] = ddmmyyyy;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const parsed = new Date(rawValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
   const fetchDashboardData = useCallback(async (syncPunchStatus = true) => {
@@ -198,11 +219,19 @@ const HRDashboard = () => {
       }
 
       const userRecentAttendances = attendance
-        .filter((a) => isSameEmployee(a.employeeId, user.employeeId))
+        .filter((a) => {
+          const attendanceDate = parseAttendanceDate(a.date);
+          return (
+            isSameEmployee(a.employeeId, user.employeeId) &&
+            attendanceDate &&
+            attendanceDate.getFullYear() === today.getFullYear() &&
+            attendanceDate.getMonth() === today.getMonth()
+          );
+        })
         .sort((a, b) => parseAttendanceDate(b.date) - parseAttendanceDate(a.date))
         .slice(0, 5);
 
-      const nextAvgLeavePerMonth = getAvgLeavePerMonth(leaves);
+      const nextAvgLeavePerMonth = getAvgLeavePerMonth(leaves, activeEmployees);
 
       const upcoming = holidays
         .filter(holiday => new Date(holiday.date) > today)
@@ -978,4 +1007,3 @@ const HRDashboard = () => {
 };
 
 export default HRDashboard;
-

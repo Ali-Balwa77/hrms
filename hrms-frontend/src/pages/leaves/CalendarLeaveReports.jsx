@@ -183,35 +183,27 @@ const LeaveCalendar = () => {
                             dayjs(date).year() === currentYear;
 
                         const isToday = dayjs(date).isSame(dayjs(), "day");
-                        const isWeekendDay = isWeekend(date);
-
                         return (
                             <div
                                 key={index}
                                 className={`
-                                    min-h-[150px] p-2.5 py-3 border-r border-b border-slate-200 transition-all relative overflow-hidden
+                                    min-h-[150px] p-2.5 py-3 border-r border-b border-[#6fbce8] transition-all relative overflow-hidden
                                     ${index % 7 === 6 ? "border-r-0" : ""}
 
                                     ${
                                         isCurrentMonth
-                                        ? "bg-gradient-to-br from-white via-indigo-50/30 to-sky-50/60 hover:from-indigo-50/60 hover:via-sky-50/50 hover:to-cyan-50/50"
-                                        : "bg-gradient-to-br from-slate-50 via-slate-100/70 to-slate-50 text-slate-300"
-                                    }
-
-                                    ${
-                                        isWeekendDay
-                                        ? "bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100/70"
-                                        : ""
+                                        ? "bg-[#b6e1ff] hover:bg-[#a7d9fb]"
+                                        : "bg-[#b6e1ff] text-slate-400"
                                     }
 
                                     ${
                                         isToday
-                                        ? "ring-2 ring-brand-500 ring-inset bg-gradient-to-br from-brand-50 via-indigo-50 to-sky-50"
+                                        ? "ring-2 ring-brand-500 ring-inset"
                                         : ""
                                     }
                                 `}
                             >
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center justify-center mb-2">
                                     <span
                                         className={`
                                             text-xs font-extrabold
@@ -219,21 +211,15 @@ const LeaveCalendar = () => {
                                                 ? "bg-brand-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-sm"
                                                 : isCurrentMonth
                                                     ? "text-slate-700"
-                                                    : "text-slate-300"
+                                                    : "text-slate-400"
                                             }
                                         `}
                                     >
                                         {dayjs(date).date()}
                                     </span>
-
-                                    {isWeekendDay && (
-                                        <span className="text-[9px] font-bold uppercase text-slate-400 bg-white/80 px-2 py-0.5 rounded-full border border-slate-200">
-                                            Weekend
-                                        </span>
-                                    )}
                                 </div>
 
-                                <div className="space-y-1">
+                                <div className={`space-y-1 ${isCurrentMonth ? "" : "text-slate-400"}`}>
                                     {dayLeaves.map((leave) => {
                                         const employeeName =
                                             leave.employeeId && typeof leave.employeeId === "object"
@@ -246,11 +232,11 @@ const LeaveCalendar = () => {
                                             <div
                                                 key={leave._id}
                                                 title={employeeName}
-                                                className="text-[11px] font-medium text-slate-700 leading-snug whitespace-normal break-words text-center"
+                                                className="text-[11px] font-semibold italic text-slate-700 leading-snug whitespace-normal break-words text-center"
                                             >
                                                 {employeeName}
                                                 {halfDayLabel && (
-                                                    <span className="text-[11px] font-medium text-slate-700 ml-1">
+                                                    <span className="text-[11px] font-semibold italic text-slate-700 ml-1">
                                                         ({halfDayLabel})
                                                     </span>
                                                 )}
