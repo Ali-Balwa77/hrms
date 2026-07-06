@@ -580,7 +580,7 @@ export const getExprtReport = async (req, res) => {
           : "--",
         checkOut: item.checkOut
           ? `${item.checkOut}`
-          : item.checkIn || "--",
+          : "--",
         punches: punchRecord,
         totalHours: item.totalHours || "00:00:00"
       });

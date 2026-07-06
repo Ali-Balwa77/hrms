@@ -550,7 +550,11 @@ const AttendanceReportPage = () => {
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft space-y-4">
         <h3 className="text-sm font-semibold text-slate-800">Filter Records</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div
+          className={`grid grid-cols-1 ${
+            canSelectAttendanceEmployee ? "md:grid-cols-3" : "md:grid-cols-2"
+          } gap-4 items-end`}
+        >
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1">
               <FiCalendar className="w-3.5 h-3.5" />
@@ -577,7 +581,7 @@ const AttendanceReportPage = () => {
             />
           </div>
 
-          {!!canSelectAttendanceEmployee ? (
+          {!!canSelectAttendanceEmployee && (
             <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center gap-1">
                 <FiUser className="w-3.5 h-3.5" />
@@ -650,10 +654,6 @@ const AttendanceReportPage = () => {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="flex items-center px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-semibold text-slate-500">
-              Personal Shift Ledger Selected
-            </div>
           )}
         </div>
 
@@ -663,7 +663,7 @@ const AttendanceReportPage = () => {
             className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-600 text-white text-xs font-semibold rounded-xl hover:bg-brand-700 active:scale-[0.98] transition-all shadow-md shadow-brand-500/10 cursor-pointer"
           >
             <FiActivity className="w-3.5 h-3.5" />
-            Show Logs Report
+            Show Report
           </button>
 
           {report.length !== 0 && (
@@ -757,17 +757,15 @@ const AttendanceReportPage = () => {
                       </td>
 
                       <td className="px-4 py-3.5 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                            item.checkOut
-                              ? "bg-rose-50 text-rose-700 border-rose-100/50"
-                              : "text-slate-400 bg-slate-50 border-slate-100"
-                          }`}
-                        >
-                          {item.checkOut === null
-                            ? item.checkIn || "--:--"
-                            : item.checkOut || "--:--"}
-                        </span>
+                        {item.checkOut ? (
+                          <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border bg-rose-50 text-rose-700 border-rose-100/50">
+                            {item.checkOut}
+                          </span>
+                        ) : (
+                          <span className="block text-center text-xs font-semibold text-slate-400">
+                            --
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-4 py-3.5 align-middle">
