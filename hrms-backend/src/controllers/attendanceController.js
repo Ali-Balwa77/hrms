@@ -120,6 +120,19 @@ const convertToEvents = (punches = []) => {
     );
 };
 
+const formatPunchRecord = (events = [], item = {}) => {
+  const timelineEvents = events.length
+    ? events
+    : [
+        item.checkIn ? { time: item.checkIn, label: "In" } : null,
+        item.checkOut ? { time: item.checkOut, label: "Out" } : null,
+      ].filter(Boolean);
+
+  return timelineEvents
+    .map((event) => `${String(event.time || "").slice(0, 5)} (${event.label})`)
+    .join(", ");
+};
+
 const getPunchIdentity = (punch) => {
   const mispunchId = punch?.mispunchId ? String(punch.mispunchId) : "";
   return [punch?.type || "", normalizeTime(punch?.in), normalizeTime(punch?.out), punch?.action || "", mispunchId].join("|");
@@ -558,10 +571,7 @@ export const getExprtReport = async (req, res) => {
 
     data.forEach((item) => {
       const events = convertToEvents(item.punches);
-
-      const punchRecord = events
-        .map((e) => `${e.time.slice(0, 5)} (${e.label})`)
-        .join(", ");
+      const punchRecord = formatPunchRecord(events, item);
 
       const row = worksheet.addRow({
         date: item.date,
@@ -570,7 +580,7 @@ export const getExprtReport = async (req, res) => {
           : "--",
         checkOut: item.checkOut
           ? `${item.checkOut}`
-          : "--",
+          : item.checkIn || "--",
         punches: punchRecord,
         totalHours: item.totalHours || "00:00:00"
       });
