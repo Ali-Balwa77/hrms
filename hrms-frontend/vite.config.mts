@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react-swc';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/dp/hrms/',    
   server: {
     host: '0.0.0.0',
     port: 8000
