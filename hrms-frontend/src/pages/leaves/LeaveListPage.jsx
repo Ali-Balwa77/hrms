@@ -222,19 +222,21 @@ const LeaveListPage = () => {
             {status === "leaveToday" ? "Review employees on approved leave shifts today." : "View personal vacation applications, tracking metrics, and states."}
           </p>
         </div>
-        <div>
-          <PermissionGuard module="leave" action="create">
-            {hasPermission(user, "leave", "read") && (
-              <Link
-                to={route(user, "/leaves/new")}
-                className="inline-flex items-center px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 shadow-md shadow-brand-600/10 hover:shadow-brand-600/25 transition-all duration-200"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-                Apply Leave
-              </Link>
-            )}
-          </PermissionGuard>
-        </div>
+        {status !== "leaveToday" && (
+          <div>
+            <PermissionGuard module="leave" action="create">
+              {hasPermission(user, "leave", "read") && (
+                <Link
+                  to={route(user, "/leaves/new")}
+                  className="inline-flex items-center px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 shadow-md shadow-brand-600/10 hover:shadow-brand-600/25 transition-all duration-200"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
+                  Apply Leave
+                </Link>
+              )}
+            </PermissionGuard>
+          </div>
+        )}
       </div>
 
       {/* DataTable Wrapper */}
