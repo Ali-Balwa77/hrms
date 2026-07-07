@@ -550,11 +550,11 @@ export const getExprtReport = async (req, res) => {
 
 
     worksheet.columns = [
-      { header: "LOG DATE", key: "date", width: 15 },
-      { header: "PUNCH IN", key: "checkIn", width: 15 },
-      { header: "PUNCH OUT", key: "checkOut", width: 15 },
-      { header: "Activity Timeline Records", key: "punches", width: 50 },
-      { header: "Total Shift Duration", key: "totalHours", width: 20 }
+      { header: "DATE", key: "date", width: 15 },
+      { header: "IN TIME", key: "checkIn", width: 15 },
+      { header: "OUT TIME", key: "checkOut", width: 15 },
+      { header: "PUNCH RECORD", key: "punches", width: 50 },
+      { header: "WORKING HOURS", key: "totalHours", width: 20 }
     ];
 
 

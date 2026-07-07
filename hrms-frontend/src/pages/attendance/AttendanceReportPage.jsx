@@ -153,7 +153,7 @@ const AttendanceReportPage = () => {
 
       setEmployeesFetched(true);
     } catch (error) {
-      showErrorToast("Failed to load employees");
+      console.log("Failed to load employees");
     }
   };
 
@@ -202,9 +202,7 @@ const AttendanceReportPage = () => {
 
       setReport(reportData);
     } catch (error) {
-      showErrorToast(
-        error.response?.data?.message || "Failed to load attendance data"
-      );
+      console.log("Failed to load attendance data", error);
     } finally {
       setLoading(false);
     }
@@ -286,7 +284,7 @@ const AttendanceReportPage = () => {
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      showErrorToast("Failed to export report");
+      console.log("Failed to export report", error);
     } finally {
       setLoading(false);
     }
@@ -524,6 +522,10 @@ const AttendanceReportPage = () => {
     );
   };
 
+  const verticalLineStyle = {
+    boxShadow: "inset -1px 0 0 #e2e8f0",
+  };
+
   const getWorkingHours = (item) => {
     return item.totalHours || "00:00:00";
   };
@@ -704,7 +706,7 @@ const AttendanceReportPage = () => {
           </div>
 
           <div className="p-5 overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse table-fixed">
+            <table className="w-full text-xs border-collapse table-fixed">
               <colgroup>
                 <col className="w-[110px]" />
                 <col className="w-[95px]" />
@@ -714,37 +716,59 @@ const AttendanceReportPage = () => {
               </colgroup>
 
               <thead>
-                <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-                  <th className="px-4 py-3.5 whitespace-nowrap uppercase tracking-wider text-[11px]">
-                    Log Date
+                <tr className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                  <th
+                    style={verticalLineStyle}
+                    className="px-4 py-3.5 !text-center align-middle whitespace-nowrap uppercase tracking-wider text-[11px]"
+                  >
+                    <div className="w-full flex items-center justify-center">Date</div>
                   </th>
-                  <th className="px-4 py-3.5 whitespace-nowrap uppercase tracking-wider text-[11px]">
-                    Punch In
+
+                  <th
+                    style={verticalLineStyle}
+                    className="px-4 py-3.5 !text-center align-middle whitespace-nowrap uppercase tracking-wider text-[11px]"
+                  >
+                    <div className="w-full flex items-center justify-center">In Time</div>
                   </th>
-                  <th className="px-4 py-3.5 whitespace-nowrap uppercase tracking-wider text-[11px]">
-                    Punch Out
+
+                  <th
+                    style={verticalLineStyle}
+                    className="px-4 py-3.5 !text-center align-middle whitespace-nowrap uppercase tracking-wider text-[11px]"
+                  >
+                    <div className="w-full flex items-center justify-center">Out Time</div>
                   </th>
-                  <th className="px-4 py-3.5 whitespace-nowrap uppercase tracking-wider text-[11px]">
-                    Activity Timeline Records
+
+                  <th
+                    style={verticalLineStyle}
+                    className="px-4 py-3.5 !text-center align-middle whitespace-nowrap uppercase tracking-wider text-[11px]"
+                  >
+                    <div className="w-full flex items-center justify-center">Punch Record</div>
                   </th>
-                  <th className="px-4 py-3.5 whitespace-nowrap uppercase tracking-wider text-[11px]">
-                    Total Duration
+
+                  <th className="px-4 py-3.5 !text-center align-middle whitespace-nowrap uppercase tracking-wider text-[11px]">
+                    <div className="w-full flex items-center justify-center">Working Hours</div>
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100 bg-white text-slate-700">
+              <tbody className="bg-white text-slate-700 [&>tr:not(:last-child)>td]:border-b [&>tr:not(:last-child)>td]:!border-[#e2e8f0]">
                 {report.length > 0 ? (
                   report.map((item) => (
                     <tr
                       key={item._id}
                       className="bg-white hover:bg-slate-50/50 transition-colors"
                     >
-                      <td className="px-4 py-3.5 font-semibold text-slate-700 whitespace-nowrap">
+                      <td
+                        style={verticalLineStyle}
+                        className="px-4 py-3.5 text-center align-middle font-semibold text-slate-700 whitespace-nowrap"
+                      >
                         {item.date}
                       </td>
 
-                      <td className="px-4 py-3.5 whitespace-nowrap">
+                      <td 
+                        style={verticalLineStyle}
+                        className="px-4 py-3.5 text-center align-middle whitespace-nowrap"
+                      >
                         <span
                           className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                             item.checkIn
@@ -756,23 +780,35 @@ const AttendanceReportPage = () => {
                         </span>
                       </td>
 
-                      <td className="px-4 py-3.5 whitespace-nowrap">
-                        {item.checkOut ? (
-                          <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border bg-rose-50 text-rose-700 border-rose-100/50">
-                            {item.checkOut}
-                          </span>
-                        ) : (
-                          <span className="block text-center text-xs font-semibold text-slate-400">
-                            --
-                          </span>
-                        )}
+                      <td 
+                        style={verticalLineStyle}
+                        className="px-4 py-3.5 text-center align-middlewhitespace-nowrap"
+                      >
+                      {item.checkOut ? (   
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                            item.checkOut
+                              ? "bg-rose-50 text-rose-700 border-rose-100/50"
+                              : "text-slate-400 bg-slate-50 border-slate-100"
+                          }`}
+                        >
+                          {item.checkOut}
+                        </span>  
+                      ) : (    
+                        <span className="inline-block text-xs font-semibold text-slate-400">
+                          --
+                        </span>
+                      )}    
                       </td>
 
-                      <td className="px-4 py-3.5 align-middle">
+                      <td 
+                        style={verticalLineStyle}
+                        className="px-4 py-3.5 text-left align-middle"
+                      >
                         {renderVisualPunches(item.punches)}
                       </td>
 
-                      <td className="px-4 py-3.5 font-bold text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-center align-middle font-bold text-slate-700 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-0.5 border border-slate-100">
                           <FiClock className="w-3.5 h-3.5 text-slate-400" />
                           {getWorkingHours(item)}

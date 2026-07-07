@@ -53,7 +53,6 @@ const prepareTemplate = (name, type, data) => {
                     <p>You requested a password reset for your HRMS account.</p>
                     <p>Click the link below to reset your password:</p>
                     <a href="${data.resetUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
-                    <p>This link will expire in 5 minute.</p>
                     <p>If you didn't request this password reset, please ignore this email.</p>
                     <p>Thank you,<br>HRMS Team</p>
                 `

@@ -86,21 +86,23 @@ const DesignationList = () => {
     const isSelected = statusFilter === type;
 
     const activeStyles = {
-      all: "border-indigo-500 bg-indigo-100 ring-2 ring-indigo-200 shadow-lg shadow-indigo-100/70",
+      all: "border-indigo-500 bg-indigo-100 ring-2 ring-indigo-300 shadow-sm shadow-indigo-100/80",
       active:
-        "border-emerald-600 bg-emerald-200 ring-2 ring-emerald-300 shadow-lg shadow-emerald-200/80",
+        "border-emerald-500 bg-emerald-100 ring-2 ring-emerald-300 shadow-sm shadow-emerald-100/80",
       inactive:
-        "border-rose-500 bg-rose-100 ring-2 ring-rose-200 shadow-lg shadow-rose-100/70",
+        "border-rose-500 bg-rose-100 ring-2 ring-rose-300 shadow-sm shadow-rose-100/80",
     };
 
-    const hoverStyles = {
-      all: "border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30",
-      active: "border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30",
-      inactive: "border-slate-200 hover:border-rose-300 hover:bg-rose-50/30",
+    const normalStyles = {
+      all: "bg-white border-slate-200 shadow-sm hover:border-indigo-300 hover:bg-indigo-50",
+      active:
+        "bg-white border-slate-200 shadow-sm hover:border-emerald-300 hover:bg-emerald-50",
+      inactive:
+        "bg-white border-slate-200 shadow-sm hover:border-rose-300 hover:bg-rose-50",
     };
 
-    return `relative bg-white p-5 rounded-2xl border flex items-center gap-4 cursor-pointer transition-all duration-200 ${
-      isSelected ? activeStyles[type] : `shadow-sm ${hoverStyles[type]}`
+    return `relative p-5 rounded-2xl border flex items-center gap-4 cursor-pointer transition-all duration-200 ${
+      isSelected ? activeStyles[type] : normalStyles[type]
     }`;
   };
 
