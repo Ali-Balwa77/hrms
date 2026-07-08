@@ -8,7 +8,11 @@ const organizationSchema = new mongoose.Schema(
     website: String,
     email: String,
     phone: String,
-    description: String
+    description: String,
+    quarterlyLeaveAllocationEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
@@ -19,4 +23,3 @@ organizationSchema.index({ email: 1 });
 const Organization = mongoose.model('Organization', organizationSchema);
 
 export default Organization;
-

@@ -8,7 +8,6 @@ import { leaveTypeSchema } from '../../validation/LeaveType.schema';
 import React, { useEffect, useState } from 'react';
 import { route } from '../../utils/routeHelper';
 import Loader from '../../components/common/Loader';
-import FormSelect from '../../components/formValidation/FromSelect';
 
 const AddLeaveType = () => {
   const { id } = useParams();
@@ -30,7 +29,6 @@ const AddLeaveType = () => {
             name: data.name || "",
             code: data.code || "",
             totalDays: data.totalDays || "",
-            allocationMode: data.allocationMode || "",
           });
         }
       } catch (err) {
@@ -48,7 +46,6 @@ const AddLeaveType = () => {
       name: '',
       code: '',
       totalDays: '',
-      allocationMode: "normal",
     },
     enableReinitialize: true,
     validationSchema: leaveTypeSchema(mode),
@@ -88,7 +85,7 @@ const AddLeaveType = () => {
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
             {isEdit ? 'Edit Leave Type' : 'Create Leave Type'}
           </h1>
-          <p className="text-xs text-slate-500 mt-1">Configure leave policies and allocation modes for employees.</p>
+          <p className="text-xs text-slate-500 mt-1">Configure leave names, codes, and annual day limits.</p>
         </div>
 
         <button
@@ -110,18 +107,6 @@ const AddLeaveType = () => {
             <FormInput label="Leave Code" name="code" formik={formik} type='text' required />
             <FormInput label="Total Days per Annum" name="totalDays" formik={formik} type='number' required />
           </div>
-          
-          <FormSelect
-            label="Allocation Mode"
-            name="allocationMode"
-            formik={formik}
-            options={[
-              { value: "normal", label: "Normal (Yearly allotment)" },
-              { value: "quarterly", label: "Quarterly (Accrued per quarter)" },
-            ]}
-            required
-          />
-
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"

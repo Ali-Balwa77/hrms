@@ -82,6 +82,13 @@ const OrganizationListPage = () => {
         </a>
       `
     },
+    {
+      title: "Leave Allocation",
+      data: "quarterlyLeaveAllocationEnabled",
+      render: (data) => data
+        ? '<span class="inline-flex items-center rounded-lg bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Quarterly</span>'
+        : '<span class="inline-flex items-center rounded-lg bg-slate-50 border border-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">Annual</span>'
+    },
     ...((canUpdateOrganization || canDeleteOrganization)
       ? [
           {

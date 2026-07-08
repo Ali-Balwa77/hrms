@@ -365,11 +365,12 @@ const LeaveDetailPage = () => {
     if (!isActive) return false;
 
     const leaveCode = getLeaveKey(leave.code);
-    const allocationMode = String(leave.allocationMode || "").toLowerCase();
 
     const isProbationLeave =
       leaveCode === "PROBATION"
-    const isQuarterlyLeave = allocationMode === "quarterly";
+    const hasLeaveBalance = employeeLeaveBalance.some((balance) => (
+      getBalanceLeaveKey(balance) === leaveCode
+    ));
 
     // Probation leave only Intern employee ne show thavi joiye
     if (isProbationLeave && !isIntern) {
@@ -381,23 +382,12 @@ const LeaveDetailPage = () => {
       return false;
     }
 
-    // Quarterly leave employee na leaveBalance ma allocated hoy to j dropdown ma show thavi joiye
-    if (isQuarterlyLeave) {
-      return employeeLeaveBalance.some((balance) => {
-        const balanceLeaveKey = getBalanceLeaveKey(balance);
-
-        return (
-          balanceLeaveKey === leaveCode
-        );
-      });
-    }
-
     // Non-intern employee ne Probation na show karvi
     if (!isIntern && isProbationLeave) {
       return false;
     }
 
-    return true;
+    return hasLeaveBalance;
   });
 
   return (

@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/mailgun.js';
 import LeaveType from '../models/LeaveType.js';
+import Organization from '../models/Organization.js';
 import { sendResponse } from '../utils/apiResponse.js';
 
 
@@ -64,6 +65,42 @@ const getActiveFallbackApprovers = async (applicantEmployeeId) => {
     .map((user) => user.employeeId);
 };
 
+const isQuarterlyLeaveOrg = (organization) =>
+  organization?.quarterlyLeaveAllocationEnabled === true;
+
+const isQuarterlyManagedLeaveType = (leaveType) =>
+  String(leaveType?.code || "").toUpperCase() === "PL";
+
+const getCurrentYearDateRange = () => {
+  const year = new Date().getFullYear();
+
+  return {
+    year,
+    validFrom: new Date(year, 0, 1),
+    validTo: new Date(year, 11, 31),
+  };
+};
+
+const makeInitialLeaveBalanceObj = (leaveType, organization) => {
+  const useQuarterlyPolicy =
+    isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(organization);
+
+  if (useQuarterlyPolicy) return null;
+
+  const yearRange = getCurrentYearDateRange();
+
+  return {
+    leaveType: leaveType.code,
+    totalLeave: Number(leaveType.totalDays || 0),
+    originalTotalLeave: Number(leaveType.totalDays || 0),
+    allocationMode: "normal",
+    quarter: null,
+    year: yearRange.year,
+    validFrom: yearRange.validFrom,
+    validTo: yearRange.validTo,
+  };
+};
+
 export const createEmployee = async (req, res) => {
   try {
     const existingEmail = await Employee.findOne({
@@ -97,9 +134,10 @@ export const createEmployee = async (req, res) => {
       return sendResponse(res, 400, "Admin cannot be selected as employee type. Assign Admin access from User Access Master.", null, {});
     }
 
-    const leaveTypes = await LeaveType.find({
-      status: true
-    });
+    const [leaveTypes, organization] = await Promise.all([
+      LeaveType.find({ status: true }),
+      Organization.findById(req.body.organization).select("quarterlyLeaveAllocationEnabled"),
+    ]);
 
     const roleName = req.body.employeeType;
 
@@ -113,23 +151,15 @@ export const createEmployee = async (req, res) => {
           return roleName === "Intern";
         }
 
-        // Quarterly leave should be allocated only from Quarterly Leave Policy module.
-        if (leave.allocationMode === "quarterly") {
+        // Quarterly-enabled organizations receive these balances from Quarterly Leave Policy.
+        if (isQuarterlyManagedLeaveType(leave) && isQuarterlyLeaveOrg(organization)) {
           return false;
         }
 
         return true;
       })
-      .map((leave) => ({
-        leaveType: leave.code,
-        totalLeave: Number(leave.totalDays || 0),
-        originalTotalLeave: Number(leave.totalDays || 0),
-        allocationMode: leave.allocationMode || "normal",
-        quarter: null,
-        year: null,
-        validFrom: null,
-        validTo: null,
-      }));
+      .map((leave) => makeInitialLeaveBalanceObj(leave, organization))
+      .filter(Boolean);
 
     const newEmployee = new Employee({
       ...req.body,
@@ -227,7 +257,7 @@ export const getEmployeeById = async (req, res) => {
   }
 };
 
-const syncLeaveBalanceByEmployeeType = async (employee, employeeType) => {
+const syncLeaveBalanceByEmployeeType = async (employee, employeeType, organization) => {
   const lwpLeave = await LeaveType.findOne({
     code: "LWP",
   });
@@ -242,17 +272,8 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType) => {
 
   
   const makeLeaveBalanceObj = (leaveType) => {
-    return {
-      leaveType: leaveType.code,
-      totalLeave: Number(leaveType.totalDays || 0),
-      originalTotalLeave: Number(leaveType.totalDays || 0),
-      isActive: leaveType.status === true,
-      allocationMode: leaveType.allocationMode || "normal",
-      quarter: null,
-      year: null,
-      validFrom: null,
-      validTo: null,
-    };
+    const balance = makeInitialLeaveBalanceObj(leaveType, organization);
+    return balance ? { ...balance, isActive: leaveType.status === true } : null;
   };
 
   
@@ -267,7 +288,8 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType) => {
     if (existingLWP) {
       newLeaveBalance.push(existingLWP);
     } else if (lwpLeave) {
-      newLeaveBalance.push(makeLeaveBalanceObj(lwpLeave));
+      const balance = makeLeaveBalanceObj(lwpLeave);
+      if (balance) newLeaveBalance.push(balance);
     }
 
     const existingProbation = employee.leaveBalance.find(
@@ -277,7 +299,8 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType) => {
     if (existingProbation) {
       newLeaveBalance.push(existingProbation);
     } else if (probationLeave) {
-      newLeaveBalance.push(makeLeaveBalanceObj(probationLeave));
+      const balance = makeLeaveBalanceObj(probationLeave);
+      if (balance) newLeaveBalance.push(balance);
     }
 
     employee.leaveBalance = newLeaveBalance;
@@ -296,8 +319,9 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType) => {
       (leave) => leave.leaveType === "PL"
     );
 
-    if (!existingPL && plLeave && plLeave.allocationMode !== "quarterly") {
-      employee.leaveBalance.push(makeLeaveBalanceObj(plLeave));
+    if (!existingPL && plLeave) {
+      const balance = makeLeaveBalanceObj(plLeave);
+      if (balance) employee.leaveBalance.push(balance);
     }
 
     
@@ -306,7 +330,8 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType) => {
     );
 
     if (!existingLWP && lwpLeave) {
-      employee.leaveBalance.push(makeLeaveBalanceObj(lwpLeave));
+      const balance = makeLeaveBalanceObj(lwpLeave);
+      if (balance) employee.leaveBalance.push(balance);
     }
   }
 
@@ -357,9 +382,14 @@ export const updateEmployee = async (req, res) => {
       }
 
       if (req.body.employeeType !== existingEmployee.employeeType) {
+        const organization = await Organization.findById(
+          req.body.organization || existingEmployee.organization
+        ).select("quarterlyLeaveAllocationEnabled");
+
         await syncLeaveBalanceByEmployeeType(
           existingEmployee,
-          req.body.employeeType
+          req.body.employeeType,
+          organization
         );
 
         updateData.leaveBalance = existingEmployee.leaveBalance;

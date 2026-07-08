@@ -1,5 +1,105 @@
 import Organization from '../models/Organization.js';
+import Employee from '../models/Employee.js';
+import LeaveType from '../models/LeaveType.js';
 import { sendResponse } from '../utils/apiResponse.js';
+
+const isQuarterlyManagedLeaveType = (leaveType) =>
+  String(leaveType?.code || "").toUpperCase() === "PL";
+
+const getCurrentYearDateRange = () => {
+  const year = new Date().getFullYear();
+
+  return {
+    year,
+    validFrom: new Date(year, 0, 1),
+    validTo: new Date(year, 11, 31),
+  };
+};
+
+const isLeaveApplicableForEmployee = (leaveType, employee) => {
+  const leaveCode = String(leaveType.code || "").toUpperCase();
+  const leaveName = String(leaveType.name || "").toLowerCase();
+  const isProbationLeave =
+    leaveCode === "PROBATION" || leaveName.includes("probation");
+
+  if (isProbationLeave) return employee.employeeType === "Intern";
+  if (leaveCode === "LWP") return true;
+
+  return employee.employeeType !== "Intern";
+};
+
+const syncNonQuarterlyOrganizationLeaveBalances = async (organizationId) => {
+  const [leaveTypes, employees] = await Promise.all([
+    LeaveType.find({ status: true }),
+    Employee.find({ organization: organizationId, status: "active" }),
+  ]);
+
+  const yearRange = getCurrentYearDateRange();
+
+  for (const employee of employees) {
+    let changed = false;
+
+    for (const leaveType of leaveTypes) {
+      if (!isQuarterlyManagedLeaveType(leaveType)) continue;
+      if (!isLeaveApplicableForEmployee(leaveType, employee)) continue;
+
+      const existingBalance = employee.leaveBalance.find(
+        (balance) => balance.leaveType === leaveType.code
+      );
+
+      if (existingBalance) {
+        existingBalance.allocationMode = "normal";
+        existingBalance.quarter = null;
+        existingBalance.year = yearRange.year;
+        existingBalance.validFrom = yearRange.validFrom;
+        existingBalance.validTo = yearRange.validTo;
+        existingBalance.totalLeave = Number(leaveType.totalDays || 0);
+        existingBalance.originalTotalLeave = Number(leaveType.totalDays || 0);
+        changed = true;
+
+        continue;
+      }
+
+      employee.leaveBalance.push({
+        leaveType: leaveType.code,
+        totalLeave: Number(leaveType.totalDays || 0),
+        originalTotalLeave: Number(leaveType.totalDays || 0),
+        allocationMode: "normal",
+        quarter: null,
+        year: yearRange.year,
+        validFrom: yearRange.validFrom,
+        validTo: yearRange.validTo,
+      });
+      changed = true;
+    }
+
+    if (changed) {
+      employee.markModified("leaveBalance");
+      await employee.save();
+    }
+  }
+};
+
+const removeQuarterlyManagedAnnualBalances = async (organizationId) => {
+  const employees = await Employee.find({ organization: organizationId, status: "active" });
+
+  for (const employee of employees) {
+    const originalLength = employee.leaveBalance.length;
+
+    employee.leaveBalance = employee.leaveBalance.filter((balance) => {
+      const leaveCode = String(balance.leaveType || "").toUpperCase();
+      const isQuarterlyManaged = leaveCode === "PL";
+      const isPolicyBalance = balance.allocationMode === "quarterly" || balance.quarter;
+
+      return !isQuarterlyManaged || isPolicyBalance;
+    });
+
+    if (employee.leaveBalance.length !== originalLength) {
+      employee.markModified("leaveBalance");
+      await employee.save();
+    }
+  }
+};
 
 export const getOrganizations = async (req, res) => {
   try {
@@ -44,6 +144,12 @@ export const createOrganization = async (req, res) => {
 
     const org = await Organization.create(req.body);
 
+    if (org.quarterlyLeaveAllocationEnabled === true) {
+      await removeQuarterlyManagedAnnualBalances(org._id);
+    } else {
+      await syncNonQuarterlyOrganizationLeaveBalances(org._id);
+    }
+
     return sendResponse(res, 201, 'Created successfully', org, {});
   } catch (error) {
     console.error('[organizationController.js] createOrganization error:', error);
@@ -57,6 +163,13 @@ export const updateOrganization = async (req, res) => {
     if (!org) {
       return sendResponse(res, 404, 'Organization not found', null, {});
     }
+
+    if (org.quarterlyLeaveAllocationEnabled === true) {
+      await removeQuarterlyManagedAnnualBalances(org._id);
+    } else {
+      await syncNonQuarterlyOrganizationLeaveBalances(org._id);
+    }
+
     sendResponse(res, 200, 'Success', org, {});
   } catch (error) {
     console.error('[organizationController.js] updateOrganization error:', error);
@@ -76,4 +189,3 @@ export const deleteOrganization = async (req, res) => {
     sendResponse(res, 500, error?.message || 'Internal server error', null, {});
   }
 };
-

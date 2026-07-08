@@ -235,7 +235,7 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
     const policy = await QuarterlyLeavePolicy.findById(req.params.id).populate(
       "leaveType",
       "name code status"
-    ).populate("organization", "name code");
+    ).populate("organization", "name code quarterlyLeaveAllocationEnabled");
 
     if (!policy) {
       return sendResponse(res, 404, "Policy not found", null, {});
@@ -247,6 +247,10 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
 
     if (!policy.organization?._id) {
       return sendResponse(res, 400, "Please assign an organization before applying this policy", null, {});
+    }
+
+    if (policy.organization?.quarterlyLeaveAllocationEnabled !== true) {
+      return sendResponse(res, 400, "Quarterly leave allocation is disabled for this organization", null, {});
     }
 
     if (policy.leaveType?.status === false) {

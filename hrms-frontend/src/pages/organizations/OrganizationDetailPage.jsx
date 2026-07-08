@@ -17,7 +17,8 @@ const initialState = {
   website: '',
   email: '',
   phone: '',
-  description: ''
+  description: '',
+  quarterlyLeaveAllocationEnabled: false
 };
 
 const OrganizationDetailPage = () => {
@@ -35,7 +36,8 @@ const OrganizationDetailPage = () => {
     website: form.website || '',
     email: form.email || '',
     phone: form.phone || '',
-    description: form.description || ''
+    description: form.description || '',
+    quarterlyLeaveAllocationEnabled: Boolean(form.quarterlyLeaveAllocationEnabled)
   };
 
   useEffect(() => {
@@ -107,6 +109,16 @@ const OrganizationDetailPage = () => {
         <FormTextarea label="Address" name="address" formik={formik} rows={2} required />
         <FormInput label="Website" name="website" formik={formik} type="text" required />
         <FormTextarea label="Description" name="description" formik={formik} rows={4} required />
+        <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            name="quarterlyLeaveAllocationEnabled"
+            checked={Boolean(formik.values.quarterlyLeaveAllocationEnabled)}
+            onChange={(event) => formik.setFieldValue("quarterlyLeaveAllocationEnabled", event.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span className="font-medium">Quarterly leave allocation</span>
+        </label>
 
         <div className="md:col-span-2 flex justify-end gap-3 mt-4 border-t border-slate-100 pt-6">
           <button

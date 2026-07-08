@@ -125,22 +125,6 @@ import React, { useEffect, useState } from 'react';
         data: "totalDays",
         render: (data) => `<span class="font-bold text-slate-800 text-sm">${data}</span>`
       },
-      {
-        title: "Allocation Mode",
-        data: "allocationMode",
-        render: (data) => {
-          const isQuarterly = data === "quarterly";
-          return `
-            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border ${
-              isQuarterly
-                ? "bg-indigo-50 text-brand-700 border-indigo-100"
-                : "bg-emerald-50 text-emerald-700 border-emerald-100"
-            }">
-              ${isQuarterly ? "Quarterly" : "Normal"}
-            </span>
-          `;
-        }
-      },
       ...(canManageLeaveType ? [{
         title: "Action",
         data: null,
@@ -172,7 +156,7 @@ import React, { useEffect, useState } from 'react';
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Leave Type Configurations</h1>
-            <p className="text-xs text-slate-500 mt-1">Manage standard and quarterly leaves, accruals, and toggles.</p>
+            <p className="text-xs text-slate-500 mt-1">Manage leave names, annual limits, and active status.</p>
           </div>
 
           {canCreateLeaveType && (

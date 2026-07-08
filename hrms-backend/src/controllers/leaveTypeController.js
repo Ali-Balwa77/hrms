@@ -3,6 +3,17 @@ import LeaveType from '../models/LeaveType.js';
 import { sendResponse } from '../utils/apiResponse.js';
 import LeaveBalanceArchive from "../models/LeaveBalanceArchive.js";
 
+const isQuarterlyLeaveOrg = (organization) =>
+  organization?.quarterlyLeaveAllocationEnabled === true;
+
+const isQuarterlyManagedLeaveType = (leaveType) =>
+  String(leaveType?.code || "").toUpperCase() === "PL";
+
+const getBalanceModeForEmployee = (leaveType, employee) =>
+  isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(employee.organization)
+    ? "quarterly"
+    : "normal";
+
 const archiveAndRemoveLeaveBalance = async ({
   employeeQuery,
   oldLeaveCode,
@@ -195,16 +206,16 @@ export const createLeaveType = async (req, res) => {
 
     const leaveType = await LeaveType.create(req.body);
 
-    if (leaveType.allocationMode === "quarterly") {
-      return sendResponse(res, 201, "Leave type saved successfully. Balance will be updated through quarterly allocation.", leaveType, {});
-    }
-
     if (leaveType.status === true) {
 
-      const employees = await Employee.find(getLeaveTypeEmployeeQuery(leaveType.code));
+      const employees = await Employee.find(getLeaveTypeEmployeeQuery(leaveType.code))
+        .populate("organization", "quarterlyLeaveAllocationEnabled");
       const yearRange = getCurrentYearDateRange();
 
       for (const emp of employees) {
+        if (isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(emp.organization)) {
+          continue;
+        }
 
         const alreadyExists = emp.leaveBalance.find(
           (x) => x.leaveType === leaveType.code
@@ -216,7 +227,7 @@ export const createLeaveType = async (req, res) => {
             leaveType: leaveType.code,
             totalLeave: leaveType.totalDays,
             originalTotalLeave: leaveType.totalDays,
-            allocationMode: leaveType.allocationMode,
+            allocationMode: getBalanceModeForEmployee(leaveType, emp),
             quarter: null,
             year: yearRange.year,
             validFrom: yearRange.validFrom,
@@ -428,17 +439,20 @@ export const updateLeaveType = async (req, res) => {
       );
     }
 
-    const employees = await Employee.find(employeeQuery);
+    const employees = await Employee.find(employeeQuery)
+      .populate("organization", "quarterlyLeaveAllocationEnabled");
 
     for (const emp of employees) {
+      const useQuarterlyPolicy =
+        isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(emp.organization);
+
       const existingIndex = emp.leaveBalance.findIndex(
         (x) => x.leaveType === oldLeaveCode || x.leaveType === leaveCode
       );
 
       if (existingIndex === -1) {
-        // ✅ Quarterly leave fresh add na karvi
-        // Quarterly leave only manual allocation thi add thavi joie
-        if (leaveType.allocationMode !== "quarterly") {
+        // Quarterly-enabled org ma policy thi allocate thay; baki org ma annual balance add thay.
+        if (!useQuarterlyPolicy) {
           const yearRange = getCurrentYearDateRange();
 
           emp.leaveBalance.push({
@@ -446,8 +460,8 @@ export const updateLeaveType = async (req, res) => {
             totalLeave: Number(leaveType.totalDays || 0),
             originalTotalLeave: Number(leaveType.totalDays || 0),
             isActive: leaveType.status === true,
-            allocationMode: leaveType.allocationMode || "normal",
-            quarter: leaveType.quarter || null,
+            allocationMode: getBalanceModeForEmployee(leaveType, emp),
+            quarter: null,
             year: yearRange.year || null,
             validFrom: yearRange.validFrom || null,
             validTo: yearRange.validTo || null,
@@ -455,22 +469,26 @@ export const updateLeaveType = async (req, res) => {
         }
       } else {
         const existingBalance = emp.leaveBalance[existingIndex];
-        const isExistingQuarterlyBalance =
-          existingBalance.allocationMode === "quarterly" ||
-          existingBalance.quarter ||
-          existingBalance.validFrom ||
-          existingBalance.validTo;
 
         emp.leaveBalance[existingIndex].leaveType = leaveCode;
         emp.leaveBalance[existingIndex].isActive = leaveType.status === true;
 
-        // ✅ Normal leave mate fields update karva
-        // Quarterly allocated balances are organization policy overrides; preserve them.
-        if (leaveType.allocationMode !== "quarterly" && !isExistingQuarterlyBalance) {
+        if (useQuarterlyPolicy) {
+          const isPolicyBalance =
+            existingBalance.allocationMode === "quarterly" ||
+            existingBalance.quarter;
+
+          if (!isPolicyBalance) {
+            emp.leaveBalance.splice(existingIndex, 1);
+          }
+        }
+
+        // Normal/non-quarterly-org balances update karva; quarterly policy balances preserve karva.
+        if (!useQuarterlyPolicy) {
           const yearRange = getCurrentYearDateRange();
           
           emp.leaveBalance[existingIndex].allocationMode =
-            leaveType.allocationMode || "normal";
+            getBalanceModeForEmployee(leaveType, emp);
           emp.leaveBalance[existingIndex].quarter = null;
           emp.leaveBalance[existingIndex].year = yearRange.year;
           emp.leaveBalance[existingIndex].validFrom = yearRange.validFrom;
