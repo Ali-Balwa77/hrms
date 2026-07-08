@@ -240,7 +240,7 @@ const LeaveListPage = () => {
       </div>
 
       {/* DataTable Wrapper */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft">
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft overflow-x-auto w-full">
         <DataTable
           key={JSON.stringify(items.map((item) => [item?._id || item?.id, item?.updatedAt, item?.status, item?.isActive, item?.name, item?.code])) || 'empty'}
           data={items}

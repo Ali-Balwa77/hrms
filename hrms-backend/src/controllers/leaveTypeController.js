@@ -146,6 +146,18 @@ const getCurrentYearDateRange = () => {
   };
 };
 
+const getLeaveTypeEmployeeQuery = (leaveCode) => {
+  if (leaveCode === "PROBATION") {
+    return { employeeType: "Intern" };
+  }
+
+  if (leaveCode === "LWP") {
+    return {};
+  }
+
+  return { employeeType: { $ne: "Intern" } };
+};
+
 
 export const createLeaveType = async (req, res) => {
   try {
@@ -183,40 +195,14 @@ export const createLeaveType = async (req, res) => {
 
     const leaveType = await LeaveType.create(req.body);
 
-    let employeeFilter = {};
-
-    
-    if (leaveType.code === "PROBATION") {
-      employeeFilter = {
-        employeeType: "Intern",
-      };
-    }
-    
-    await Employee.updateMany(
-      employeeFilter,
-      {
-        $addToSet: {
-          leaveBalance: {
-            leaveType: leaveType.code,
-            totalLeave: Number(leaveType.totalDays || 0),
-            originalTotalLeave: Number(leaveType.totalDays || 0),
-            allocationMode: leaveType.allocationMode || "normal",
-            quarter: leaveType.quarter || null,
-            year: leaveType.year || null,
-            validFrom: leaveType.validFrom || null,
-            validTo: leaveType.validTo || null,
-          },
-        },
-      }
-    );
-
     if (leaveType.allocationMode === "quarterly") {
       return sendResponse(res, 201, "Leave type saved successfully. Balance will be updated through quarterly allocation.", leaveType, {});
     }
 
     if (leaveType.status === true) {
 
-      const employees = await Employee.find();
+      const employees = await Employee.find(getLeaveTypeEmployeeQuery(leaveType.code));
+      const yearRange = getCurrentYearDateRange();
 
       for (const emp of employees) {
 
@@ -231,6 +217,10 @@ export const createLeaveType = async (req, res) => {
             totalLeave: leaveType.totalDays,
             originalTotalLeave: leaveType.totalDays,
             allocationMode: leaveType.allocationMode,
+            quarter: null,
+            year: yearRange.year,
+            validFrom: yearRange.validFrom,
+            validTo: yearRange.validTo,
           });
 
           await emp.save();
@@ -464,16 +454,23 @@ export const updateLeaveType = async (req, res) => {
           });
         }
       } else {
+        const existingBalance = emp.leaveBalance[existingIndex];
+        const isExistingQuarterlyBalance =
+          existingBalance.allocationMode === "quarterly" ||
+          existingBalance.quarter ||
+          existingBalance.validFrom ||
+          existingBalance.validTo;
+
         emp.leaveBalance[existingIndex].leaveType = leaveCode;
         emp.leaveBalance[existingIndex].isActive = leaveType.status === true;
-        emp.leaveBalance[existingIndex].allocationMode =
-          leaveType.allocationMode || "normal";
 
         // ✅ Normal leave mate fields update karva
-        // Quarterly leave mate archive/manual allocation na quarter valid dates preserve karva
-        if (leaveType.allocationMode !== "quarterly") {
+        // Quarterly allocated balances are organization policy overrides; preserve them.
+        if (leaveType.allocationMode !== "quarterly" && !isExistingQuarterlyBalance) {
           const yearRange = getCurrentYearDateRange();
           
+          emp.leaveBalance[existingIndex].allocationMode =
+            leaveType.allocationMode || "normal";
           emp.leaveBalance[existingIndex].quarter = null;
           emp.leaveBalance[existingIndex].year = yearRange.year;
           emp.leaveBalance[existingIndex].validFrom = yearRange.validFrom;

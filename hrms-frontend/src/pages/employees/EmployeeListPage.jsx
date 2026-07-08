@@ -90,6 +90,14 @@ const EmployeeListPage = () => {
   };
 
   const isPresentTodayPage = present === "today";
+  const escapeHtml = (value = "") =>
+    String(value).replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    }[char]));
 
   const columns = [
     { 
@@ -98,20 +106,40 @@ const EmployeeListPage = () => {
       render: (data) => `<span class="font-mono font-semibold text-slate-600">${data}</span>`
     },
     {
-      title: "Name",
+      title: "Employee Name",
       data: null,
-      render: (data) => `
-        <div class="flex items-center gap-2.5">
+      render: (data) => {
+        const firstName = data?.firstName || "";
+        const lastName = data?.lastName || "";
+        const initials = `${firstName.charAt(0)}${lastName.charAt(0)}` || "E";
+        const fullName = `${firstName} ${lastName}`.trim() || "Employee";
+        const employeeEmail = data?.officeEmail || data?.email || "";
+        const safeInitials = escapeHtml(initials);
+        const safeFullName = escapeHtml(fullName);
+        const safeEmployeeEmail = escapeHtml(employeeEmail);
+
+        return `
+        <div class="flex items-center gap-3 min-w-[220px]">
           <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-xs">
-            ${data.firstName.charAt(0)}${data.lastName.charAt(0)}
+            ${safeInitials}
           </div>
-          <div>
-            <span class="font-semibold text-slate-800">${data.firstName} ${data.lastName}</span>
+          <div class="min-w-0">
+            <span class="block font-semibold text-slate-800 leading-tight">${safeFullName}</span>
+            ${
+              employeeEmail
+                ? `<span class="mt-1 flex items-center gap-1.5 text-[11px] text-brand-600 leading-tight">
+                    <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="truncate max-w-[190px]" title="${safeEmployeeEmail}">${safeEmployeeEmail}</span>
+                  </span>`
+                : `<span class="mt-1 block text-[11px] text-slate-300">No email</span>`
+            }
           </div>
         </div>
-      `
+      `;
+      }
     },
-    { title: "Email", data: "officeEmail" },
     { 
       title: "Department", 
       data: "department",

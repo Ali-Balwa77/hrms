@@ -16,11 +16,12 @@ const QuarterlyLeavePolicyForm = () => {
   const user = useSelector((state) => state.auth.user);
 
   const [leaveTypes, setLeaveTypes] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const formik = useFormik({
     initialValues: {
-      policyName: '',
+      organization: '',
       leaveType: '',
       year: new Date().getFullYear(),
       quarter: '',
@@ -66,14 +67,10 @@ const QuarterlyLeavePolicyForm = () => {
         const { data } = await api.get('/leave-type');
         const list = Array.isArray(data) ? data : [];
 
-        const quarterlyLeaveTypes = list.filter(
-          (item) => item.allocationMode === "quarterly"
-        );
-
         setLeaveTypes(
-          quarterlyLeaveTypes.map((item) => ({
+          list.map((item) => ({
             value: item._id,
-            label: item.code,
+            label: item.name ? `${item.code} - ${item.name}` : item.code,
           }))
         );
       } catch (error) {
@@ -82,6 +79,26 @@ const QuarterlyLeavePolicyForm = () => {
     };
 
     loadLeaveTypes();
+  }, []);
+
+  useEffect(() => {
+    const loadOrganizations = async () => {
+      try {
+        const { data } = await api.get('/organizations');
+        const list = Array.isArray(data) ? data : [];
+
+        setOrganizations(
+          list.map((item) => ({
+            value: item._id,
+            label: item.code ? `${item.name} (${item.code})` : item.name,
+          }))
+        );
+      } catch (error) {
+      console.error('Request failed:', error);
+      }
+    };
+
+    loadOrganizations();
   }, []);
 
   useEffect(() => {
@@ -94,7 +111,7 @@ const QuarterlyLeavePolicyForm = () => {
         const policy = data || {};
 
         formik.setValues({
-          policyName: policy.policyName || '',
+          organization: typeof policy.organization === 'object' ? policy.organization?._id || '' : policy.organization || '',
           leaveType: policy.leaveType || '',
           year: policy.year || new Date().getFullYear(),
           quarter: policy.quarter || '',
@@ -114,6 +131,7 @@ const QuarterlyLeavePolicyForm = () => {
   }, [id, isEdit]);
 
   const leaveTypeOptions = leaveTypes;
+  const organizationOptions = organizations;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -148,11 +166,11 @@ const QuarterlyLeavePolicyForm = () => {
         <form onSubmit={formik.handleSubmit} className="space-y-5">
           <h3 className="font-semibold text-slate-800 text-base border-b border-slate-100 pb-4 mb-2">Policy Configuration</h3>
           
-          <FormInput
-            label="Policy Name"
-            name="policyName"
+          <FormSelect
+            label="Organization"
+            name="organization"
             formik={formik}
-            type="text"
+            options={organizationOptions}
             required
           />
 

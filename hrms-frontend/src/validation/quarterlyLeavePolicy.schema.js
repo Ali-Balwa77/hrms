@@ -2,12 +2,11 @@ import * as Yup from 'yup';
 
 export const quarterlyLeavePolicySchema = () =>
   Yup.object({
-    policyName: Yup.string()
-      .trim()
-      .required('Policy Name is required.'),
-
     leaveType: Yup.string()
       .required('Leave Type is required.'),
+
+    organization: Yup.string()
+      .required('Organization is required.'),
 
     year: Yup.string()
     .required("Year is required.")

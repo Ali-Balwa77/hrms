@@ -2,6 +2,7 @@ import QuarterlyLeavePolicy from "../models/QuarterlyLeavePolicy.js";
 import QuarterlyLeaveAllocationLog from "../models/QuarterlyLeaveAllocationLog.js";
 import Employee from "../models/Employee.js";
 import LeaveType from "../models/LeaveType.js";
+import Organization from "../models/Organization.js";
 import { sendResponse } from '../utils/apiResponse.js';
 
 const getCurrentQuarter = (date = new Date()) => {
@@ -40,7 +41,7 @@ const getQuarterDateRange = (quarter, year) => {
 export const createQuarterlyLeavePolicy = async (req, res) => {
   try {
     const {
-      policyName,
+      organization,
       leaveType,
       year,
       quarter,
@@ -50,21 +51,25 @@ export const createQuarterlyLeavePolicy = async (req, res) => {
       status,
     } = req.body;
 
-    const leaveTypeData = await LeaveType.findById(leaveType);
+    const [leaveTypeData, organizationData] = await Promise.all([
+      LeaveType.findById(leaveType),
+      Organization.findById(organization),
+    ]);
 
     if (!leaveTypeData) {
       return sendResponse(res, 404, "Leave type not found", null, {});
     }
 
-    if (leaveTypeData.allocationMode !== "quarterly") {
-      return sendResponse(res, 400, "This leave type is not configured for quarterly allocation", null, {});
+    if (!organizationData) {
+      return sendResponse(res, 404, "Organization not found", null, {});
     }
 
-    if (leaveTypeData.allocationMode !== "quarterly") {
-      return sendResponse(res, 400, "This leave type is not configured for quarterly allocation", null, {});
+    if (leaveTypeData.status === false) {
+      return sendResponse(res, 400, "Inactive leave type cannot be used for quarterly allocation", null, {});
     }
 
     const exists = await QuarterlyLeavePolicy.findOne({
+      organization,
       leaveType,
       year,
       quarter,
@@ -75,7 +80,7 @@ export const createQuarterlyLeavePolicy = async (req, res) => {
     }
 
     const policy = await QuarterlyLeavePolicy.create({
-      policyName,
+      organization,
       leaveType,
       year,
       quarter,
@@ -95,6 +100,7 @@ export const createQuarterlyLeavePolicy = async (req, res) => {
 export const getQuarterlyLeavePolicies = async (req, res) => {
   try {
     const policies = await QuarterlyLeavePolicy.find()
+      .populate("organization", "name code")
       .populate("leaveType", "name code")
       .sort({ createdAt: -1 });
 
@@ -134,7 +140,7 @@ export const updateQuarterlyLeavePolicy = async (req, res) => {
     }
 
     const {
-      policyName,
+      organization,
       leaveType,
       year,
       quarter,
@@ -148,18 +154,26 @@ export const updateQuarterlyLeavePolicy = async (req, res) => {
       return sendResponse(res, 400, "Leave days must be greater than 0", null, {});
     }
 
-    const leaveTypeData = await LeaveType.findById(leaveType);
+    const [leaveTypeData, organizationData] = await Promise.all([
+      LeaveType.findById(leaveType),
+      Organization.findById(organization),
+    ]);
 
     if (!leaveTypeData) {
       return sendResponse(res, 404, "Leave type not found", null, {});
     }
 
-    if (leaveTypeData.allocationMode !== "quarterly") {
-      return sendResponse(res, 400, "This leave type is not configured for quarterly allocation", null, {});
+    if (!organizationData) {
+      return sendResponse(res, 404, "Organization not found", null, {});
+    }
+
+    if (leaveTypeData.status === false) {
+      return sendResponse(res, 400, "Inactive leave type cannot be used for quarterly allocation", null, {});
     }
 
     const duplicate = await QuarterlyLeavePolicy.findOne({
       _id: { $ne: policyId },
+      organization,
       leaveType,
       year,
       quarter,
@@ -172,7 +186,7 @@ export const updateQuarterlyLeavePolicy = async (req, res) => {
     const policy = await QuarterlyLeavePolicy.findByIdAndUpdate(
       policyId,
       {
-        policyName,
+        organization,
         leaveType,
         year,
         quarter,
@@ -220,8 +234,8 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
   try {
     const policy = await QuarterlyLeavePolicy.findById(req.params.id).populate(
       "leaveType",
-      "name code"
-    );
+      "name code status"
+    ).populate("organization", "name code");
 
     if (!policy) {
       return sendResponse(res, 404, "Policy not found", null, {});
@@ -229,6 +243,14 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
 
     if (!policy.status) {
       return sendResponse(res, 400, "Inactive policy cannot be applied", null, {});
+    }
+
+    if (!policy.organization?._id) {
+      return sendResponse(res, 400, "Please assign an organization before applying this policy", null, {});
+    }
+
+    if (policy.leaveType?.status === false) {
+      return sendResponse(res, 400, "Inactive leave type cannot be allocated", null, {});
     }
 
     const leaveKey = policy.leaveType?.code;
@@ -266,6 +288,7 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
 
     const employeeFilter = {
       status: "active",
+      organization: policy.organization?._id || policy.organization,
     };
 
     // Probation leave only Intern employees ne allocate thavi joiye

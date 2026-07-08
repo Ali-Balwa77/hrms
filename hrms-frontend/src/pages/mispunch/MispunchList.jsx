@@ -300,7 +300,7 @@ export default function MispunchList({ approval = false }) {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-auto p-6">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-auto w-full p-6">
         <DataTable
           key={
             JSON.stringify(

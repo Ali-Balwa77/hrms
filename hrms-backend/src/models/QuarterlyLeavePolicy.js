@@ -2,15 +2,15 @@ import mongoose from 'mongoose';
 
 const quarterlyLeavePolicySchema = new mongoose.Schema(
   {
-    policyName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
     leaveType: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'LeaveType',
+      required: true,
+    },
+
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
       required: true,
     },
 
@@ -52,12 +52,12 @@ const quarterlyLeavePolicySchema = new mongoose.Schema(
 );
 
 quarterlyLeavePolicySchema.index(
-  { leaveType: 1, year: 1, quarter: 1 },
+  { organization: 1, leaveType: 1, year: 1, quarter: 1 },
   { unique: true }
 );
 
 
-quarterlyLeavePolicySchema.index({ status: 1, year: 1, quarter: 1 });
+quarterlyLeavePolicySchema.index({ organization: 1, status: 1, year: 1, quarter: 1 });
 const QuarterlyLeavePolicy = mongoose.model(
   'QuarterlyLeavePolicy',
   quarterlyLeavePolicySchema

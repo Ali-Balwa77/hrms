@@ -2,7 +2,7 @@ import axios from 'axios';
 import { showErrorToast } from '../utils/toastHelper.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const REQUEST_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 15000;
+const REQUEST_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 30000;
 
 const isProductionResponse = (payload) => (
   payload &&

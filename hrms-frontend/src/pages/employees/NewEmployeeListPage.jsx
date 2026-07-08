@@ -163,7 +163,7 @@ const NewEmployeeListPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto w-full p-6">
         <DataTable
           key={JSON.stringify(employees.map((item) => [item?._id || item?.id, item?.updatedAt, item?.status, item?.isActive, item?.name, item?.code])) || 'empty'}
           data={employees}
