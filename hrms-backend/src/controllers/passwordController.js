@@ -24,7 +24,7 @@ export const forgotPassword = async (req, res) => {
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = undefined;
     
-    const resetUrl = `${process.env.FRONTEND_URL}/dp/hrms/password/reset/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
     await sendEmail(email, employee.firstName, 'reset_password', { resetUrl });
     await user.save();
  

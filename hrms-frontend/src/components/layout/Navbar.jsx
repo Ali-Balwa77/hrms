@@ -135,7 +135,7 @@ const Navbar = () => {
           aria-label="Go to dashboard"
         >
           <img
-            src="/dp/hrms/hrms-logo.svg"
+            src="/hrms-logo.svg"
             alt="HRMS Logo"
             className="hidden sm:block h-12 w-auto object-contain"
           />

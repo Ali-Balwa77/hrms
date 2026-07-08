@@ -44,7 +44,7 @@ const ForgotPasswordPage = () => {
         {/* Header Branding */}
         <div className="flex flex-col items-center text-center mb-6">
           <img
-            src="/dp/hrms/hrms-mark.svg"
+            src="/hrms-mark.svg"
             alt="HRMS Logo"
             className="block h-20 sm:h-24 md:h-28 w-auto object-contain"
           />
