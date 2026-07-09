@@ -7,7 +7,7 @@ const ReportingManagerMaster = () => {
   const [employees, setEmployees] = useState([]);
   const teamLeads = allEmployees.filter(
     (emp) =>
-      ['Team Lead', 'Admin'].includes(emp.employeeType) &&
+      ['Team Lead', 'CEO'].includes(emp.employeeType) &&
       emp.status === 'active'
   );
   const [oldTlId, setOldTlId] = useState("");

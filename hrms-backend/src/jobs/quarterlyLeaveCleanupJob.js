@@ -2,7 +2,6 @@ import cron from "node-cron";
 import { removeExpiredQuarterlyBalances } from "../utils/removeExpiredQuarterlyBalances.js";
 
 export const startQuarterlyLeaveCleanupJob = () => {
-  // દરરોજ રાત્રે 12:05 AM પર run થશે
   cron.schedule("5 0 * * *", async () => {
     try {
       console.log("Expired quarterly leave cleanup started");

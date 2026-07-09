@@ -125,6 +125,15 @@ import React, { useEffect, useState } from 'react';
         data: "totalDays",
         render: (data) => `<span class="font-bold text-slate-800 text-sm">${data}</span>`
       },
+      {
+        title: "Allocation",
+        data: "allocationCycle",
+        render: (data) => {
+          const cycle = data || "annual";
+          const isQuarterly = cycle === "quarterly";
+          return `<span class="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold ${isQuarterly ? "bg-violet-50 text-violet-700 border-violet-100" : "bg-emerald-50 text-emerald-700 border-emerald-100"}">${isQuarterly ? "Quarterly" : "Annual"}</span>`;
+        }
+      },
       ...(canManageLeaveType ? [{
         title: "Action",
         data: null,
@@ -173,7 +182,7 @@ import React, { useEffect, useState } from 'react';
         {/* Table Wrapper */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto w-full p-6">
           <DataTable
-            key={JSON.stringify(items.map((item) => [item?._id || item?.id, item?.updatedAt, item?.status, item?.isActive, item?.name, item?.code])) || 'empty'}
+            key={JSON.stringify(items.map((item) => [item?._id || item?.id, item?.updatedAt, item?.status, item?.isActive, item?.name, item?.code, item?.allocationCycle])) || 'empty'}
             data={items}
             columns={columns}
             options={{

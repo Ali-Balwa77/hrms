@@ -15,6 +15,11 @@ const employeeSchema = new mongoose.Schema(
     designation: String,
     department: String,
     joinDate: Date,
+    probationPeriodMonths: {
+      type: Number,
+      default: 6,
+      min: 0,
+    },
     gender: {
       type: String,
       enum: ['Male', 'Female'],
@@ -146,4 +151,3 @@ employeeSchema.pre('save', async function(next) {
 const Employee = mongoose.model('Employee', employeeSchema);
 
 export default Employee;
-

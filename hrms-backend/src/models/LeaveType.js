@@ -22,6 +22,12 @@ const leaveTypeSchema = new mongoose.Schema(
       default: 0,
     },
 
+    allocationCycle: {
+      type: String,
+      enum: ['annual', 'quarterly'],
+      default: 'annual',
+    },
+
     status: {
       type: Boolean,
       default: true,
@@ -33,6 +39,7 @@ const leaveTypeSchema = new mongoose.Schema(
 
 leaveTypeSchema.index({ status: 1 });
 leaveTypeSchema.index({ code: 1, status: 1 });
+leaveTypeSchema.index({ allocationCycle: 1, status: 1 });
 const LeaveType = mongoose.model('LeaveType', leaveTypeSchema);
 
 export default LeaveType;

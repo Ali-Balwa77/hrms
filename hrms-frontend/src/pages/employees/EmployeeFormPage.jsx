@@ -61,6 +61,7 @@ const EmployeeFormPage = () => {
           phone: data.phone ? `+91 ${data.phone}` : "+91 ",
           dob: data.dob ? data.dob.substring(0, 10) : "",
           joinDate: data.joinDate ? data.joinDate.substring(0, 10) : "",
+          probationPeriodMonths: data.probationPeriodMonths ?? 6,
           department: data.department || "",
           designation: data.designation || "",
           organization: data.organization?._id || "",
@@ -148,6 +149,7 @@ const EmployeeFormPage = () => {
     designation: "",
     department: "",
     joinDate: "",
+    probationPeriodMonths: 6,
     employeeType: "",
     organization: "",
     leaveForwardTo: [],
@@ -161,6 +163,13 @@ const EmployeeFormPage = () => {
       try {
         setLoading(true);
 
+        const probationPeriodMonths =
+          values.probationPeriodMonths === "" ||
+          values.probationPeriodMonths === null ||
+          values.probationPeriodMonths === undefined
+            ? undefined
+            : Number(values.probationPeriodMonths);
+
         const payload = {
           ...values,
           leaveForwardTo: values.leaveForwardTo.map(item => item.value),
@@ -168,6 +177,12 @@ const EmployeeFormPage = () => {
           joinDate: formatLocalDate(values.joinDate),
           phone: values.phone.replace(/^\+91\s?/, "").trim(),
         };
+
+        if (probationPeriodMonths !== undefined) {
+          payload.probationPeriodMonths = probationPeriodMonths;
+        } else {
+          delete payload.probationPeriodMonths;
+        }
 
         if (!isEdit) {
           await api.post('/employees', payload);
@@ -243,6 +258,7 @@ const EmployeeFormPage = () => {
             <FormInput label="Department" name="department" formik={formik} type="text" required />
             <FormSelect label="Designation" name="designation" formik={formik} options={designationList.map((des) => ({ label: des.name, value: des.name }))} required />
             <FormInput label="Corporate Join Date" name="joinDate" formik={formik} type="date" required />
+            <FormInput label="Probation Period Months" name="probationPeriodMonths" formik={formik} type="number" />
             <FormSelect label="Employee Category Role" name="employeeType" formik={formik} options={roleList.map((role) => ({ label: role.name, value: role.name }))} required />
             <FormSelect label="Organization Tenant" name="organization" formik={formik} options={organizations.map((org) => ({ label: org.name, value: org._id }))} required />
           </div>

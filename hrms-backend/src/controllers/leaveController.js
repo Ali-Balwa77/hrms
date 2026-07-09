@@ -5,6 +5,7 @@ import { sendEmail } from '../utils/mailgun.js';
 import LeaveType from '../models/LeaveType.js';
 import Holiday from '../models/Holiday.js';
 import { removeExpiredQuarterlyBalances } from "../utils/quarterlyBalanceHelper.js";
+import { removeExpiredProbationBalances } from "../utils/removeExpiredProbationBalances.js";
 import { sendResponse } from '../utils/apiResponse.js';
 import { sendSocketEvent, sendSocketNotification } from "../server.js";
 import { createNotificationForUsers, clearRequestNotifications, normalizeNotificationForUser } from "../utils/notificationHelper.js";
@@ -318,6 +319,7 @@ export const applyLeave = async (req, res) => {
     }
    
     await removeExpiredQuarterlyBalances();
+    await removeExpiredProbationBalances();
 
     const employee = await Employee.findById(req.user.employeeId);
     const leaveType = await LeaveType.findById(req.body.leaveType);
@@ -325,6 +327,18 @@ export const applyLeave = async (req, res) => {
     const leaveBalanceItem = employee.leaveBalance.find(
       (x) => x.leaveType === leaveType.code
     );
+
+    if (!leaveBalanceItem) {
+      return sendResponse(res, 400, "Leave balance not found", null, {});
+    }
+
+    if (leaveBalanceItem.validFrom && fromDate < new Date(leaveBalanceItem.validFrom)) {
+      return sendResponse(res, 400, `${leaveType.name} is not valid for selected start date`, null, {});
+    }
+
+    if (leaveBalanceItem.validTo && toDate > new Date(leaveBalanceItem.validTo)) {
+      return sendResponse(res, 400, `${leaveType.name} is not valid for selected end date`, null, {});
+    }
 
     const balance = Number(leaveBalanceItem?.totalLeave || 0);
      
@@ -355,10 +369,6 @@ export const applyLeave = async (req, res) => {
       if (!allowedLeaves.includes(leaveType.code)) {
         return sendResponse(res, 400, "Intern can apply only LWP or Probation Leave.", null, {});
       }
-    }
-
-    if (roleName !== "Intern" && leaveType.code === "PROBATION") {
-      return sendResponse(res, 400, "Probation Leave is allowed only for Intern.", null, {});
     }
 
     const resolvedForwardTo = await resolveLeaveForwardTo(
@@ -540,6 +550,7 @@ export const updateLeave = async (req, res) => {
 export const approveLeave = async (req, res) => {
   try {
     await removeExpiredQuarterlyBalances();
+    await removeExpiredProbationBalances();
     const { id } = req.params;
  
     const numberOfDays = req.body.sanctionedDays;

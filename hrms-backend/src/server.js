@@ -27,7 +27,11 @@ import mispunchRoutes from './routes/mispunchRoutes.js';
 import { sendResponse } from './utils/apiResponse.js';
 import { logger } from './utils/logger.js';
 import { removeExpiredQuarterlyBalances } from "./utils/removeExpiredQuarterlyBalances.js";
+import { refillAnnualLeaveBalances } from "./utils/refillAnnualLeaveBalances.js";
+import { removeExpiredProbationBalances } from "./utils/removeExpiredProbationBalances.js";
+import { startAnnualLeaveRefillJob } from "./jobs/annualLeaveRefillJob.js";
 import { startQuarterlyLeaveCleanupJob } from "./jobs/quarterlyLeaveCleanupJob.js";
+import { startProbationLeaveCleanupJob } from "./jobs/probationLeaveCleanupJob.js";
 
 dotenv.config();
 
@@ -158,8 +162,12 @@ const PORT = process.env.PORT;
 
 connectDB().then(async () => {
   await removeExpiredQuarterlyBalances();
+  await removeExpiredProbationBalances();
+  await refillAnnualLeaveBalances();
 
+  startAnnualLeaveRefillJob();
   startQuarterlyLeaveCleanupJob();
+  startProbationLeaveCleanupJob();
 
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

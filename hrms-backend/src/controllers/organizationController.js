@@ -2,27 +2,15 @@ import Organization from '../models/Organization.js';
 import Employee from '../models/Employee.js';
 import LeaveType from '../models/LeaveType.js';
 import { sendResponse } from '../utils/apiResponse.js';
+import { getAdjustedLeaveBalanceDays, getCurrentYearDateRange, getLeaveBalanceDays, isProbationLeaveType } from '../utils/leaveBalancePolicy.js';
 
 const isQuarterlyManagedLeaveType = (leaveType) =>
-  String(leaveType?.code || "").toUpperCase() === "PL";
-
-const getCurrentYearDateRange = () => {
-  const year = new Date().getFullYear();
-
-  return {
-    year,
-    validFrom: new Date(year, 0, 1),
-    validTo: new Date(year, 11, 31),
-  };
-};
+  leaveType?.allocationCycle === "quarterly";
 
 const isLeaveApplicableForEmployee = (leaveType, employee) => {
   const leaveCode = String(leaveType.code || "").toUpperCase();
-  const leaveName = String(leaveType.name || "").toLowerCase();
-  const isProbationLeave =
-    leaveCode === "PROBATION" || leaveName.includes("probation");
 
-  if (isProbationLeave) return employee.employeeType === "Intern";
+  if (isProbationLeaveType(leaveType)) return employee.employeeType !== "Admin";
   if (leaveCode === "LWP") return true;
 
   return employee.employeeType !== "Intern";
@@ -48,22 +36,31 @@ const syncNonQuarterlyOrganizationLeaveBalances = async (organizationId) => {
       );
 
       if (existingBalance) {
+        const balanceDays = getAdjustedLeaveBalanceDays(
+          leaveType,
+          employee,
+          existingBalance,
+          yearRange
+        );
+
         existingBalance.allocationMode = "normal";
         existingBalance.quarter = null;
         existingBalance.year = yearRange.year;
         existingBalance.validFrom = yearRange.validFrom;
         existingBalance.validTo = yearRange.validTo;
-        existingBalance.totalLeave = Number(leaveType.totalDays || 0);
-        existingBalance.originalTotalLeave = Number(leaveType.totalDays || 0);
+        existingBalance.totalLeave = balanceDays.totalLeave;
+        existingBalance.originalTotalLeave = balanceDays.originalTotalLeave;
         changed = true;
 
         continue;
       }
 
+      const leaveDays = getLeaveBalanceDays(leaveType, employee, yearRange);
+
       employee.leaveBalance.push({
         leaveType: leaveType.code,
-        totalLeave: Number(leaveType.totalDays || 0),
-        originalTotalLeave: Number(leaveType.totalDays || 0),
+        totalLeave: leaveDays,
+        originalTotalLeave: leaveDays,
         allocationMode: "normal",
         quarter: null,
         year: yearRange.year,
@@ -81,14 +78,20 @@ const syncNonQuarterlyOrganizationLeaveBalances = async (organizationId) => {
 };
 
 const removeQuarterlyManagedAnnualBalances = async (organizationId) => {
-  const employees = await Employee.find({ organization: organizationId, status: "active" });
+  const [quarterlyLeaveTypes, employees] = await Promise.all([
+    LeaveType.find({ allocationCycle: "quarterly", status: true }).select("code"),
+    Employee.find({ organization: organizationId, status: "active" }),
+  ]);
+  const quarterlyLeaveCodes = new Set(
+    quarterlyLeaveTypes.map((leaveType) => String(leaveType.code || "").toUpperCase())
+  );
 
   for (const employee of employees) {
     const originalLength = employee.leaveBalance.length;
 
     employee.leaveBalance = employee.leaveBalance.filter((balance) => {
       const leaveCode = String(balance.leaveType || "").toUpperCase();
-      const isQuarterlyManaged = leaveCode === "PL";
+      const isQuarterlyManaged = quarterlyLeaveCodes.has(leaveCode);
       const isPolicyBalance = balance.allocationMode === "quarterly" || balance.quarter;
 
       return !isQuarterlyManaged || isPolicyBalance;

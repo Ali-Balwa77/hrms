@@ -68,6 +68,10 @@ export const createQuarterlyLeavePolicy = async (req, res) => {
       return sendResponse(res, 400, "Inactive leave type cannot be used for quarterly allocation", null, {});
     }
 
+    if (leaveTypeData.allocationCycle !== "quarterly") {
+      return sendResponse(res, 400, "Only quarterly leave types can be used for quarterly allocation", null, {});
+    }
+
     const exists = await QuarterlyLeavePolicy.findOne({
       organization,
       leaveType,
@@ -171,6 +175,10 @@ export const updateQuarterlyLeavePolicy = async (req, res) => {
       return sendResponse(res, 400, "Inactive leave type cannot be used for quarterly allocation", null, {});
     }
 
+    if (leaveTypeData.allocationCycle !== "quarterly") {
+      return sendResponse(res, 400, "Only quarterly leave types can be used for quarterly allocation", null, {});
+    }
+
     const duplicate = await QuarterlyLeavePolicy.findOne({
       _id: { $ne: policyId },
       organization,
@@ -209,10 +217,53 @@ export const deleteQuarterlyLeavePolicy = async (req, res) => {
   try {
     const policyId = req.params.id;
 
-    const policy = await QuarterlyLeavePolicy.findById(policyId);
+    const policy = await QuarterlyLeavePolicy.findById(policyId).populate(
+      "leaveType",
+      "code"
+    );
 
     if (!policy) {
       return sendResponse(res, 404, "Quarterly leave policy not found", null, {});
+    }
+
+    const leaveTypeData = policy.leaveType?.code
+      ? policy.leaveType
+      : await LeaveType.findById(policy.leaveType).select("code").lean();
+    const leaveCode = leaveTypeData?.code;
+
+    if (!leaveCode) {
+      return sendResponse(res, 400, "Leave type code not found for this policy", null, {});
+    }
+
+    const employees = await Employee.find({
+      organization: policy.organization,
+      "leaveBalance.leaveType": leaveCode,
+    });
+
+    let removedEmployeeBalances = 0;
+
+    for (const employee of employees) {
+      const originalLength = employee.leaveBalance.length;
+
+      employee.leaveBalance = employee.leaveBalance.filter((balance) => {
+        const isSameLeaveType =
+          String(balance.leaveType || "").trim().toUpperCase() ===
+          String(leaveCode || "").trim().toUpperCase();
+        const isSameQuarter =
+          String(balance.quarter || "").trim().toUpperCase() ===
+          String(policy.quarter || "").trim().toUpperCase();
+        const isSameYear = Number(balance.year) === Number(policy.year);
+
+        return !(isSameLeaveType && isSameQuarter && isSameYear);
+      });
+
+      const removedCount = originalLength - employee.leaveBalance.length;
+
+      if (removedCount > 0) {
+        removedEmployeeBalances += removedCount;
+        employee.markModified("leaveBalance");
+        await employee.save();
+      }
     }
 
     // ✅ First delete related allocation logs
@@ -223,7 +274,13 @@ export const deleteQuarterlyLeavePolicy = async (req, res) => {
     // ✅ Then delete policy
     await QuarterlyLeavePolicy.findByIdAndDelete(policy._id);
 
-    sendResponse(res, 200, "Quarterly leave policy deleted successfully", null, {});
+    sendResponse(
+      res,
+      200,
+      "Quarterly leave policy deleted successfully",
+      { removedEmployeeBalances },
+      {}
+    );
   } catch (error) {
     console.error('[quarterlyLeavePolicyController.js] API error:', error);
     sendResponse(res, 500, error.message, null, {});
@@ -234,7 +291,7 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
   try {
     const policy = await QuarterlyLeavePolicy.findById(req.params.id).populate(
       "leaveType",
-      "name code status"
+      "name code status allocationCycle"
     ).populate("organization", "name code quarterlyLeaveAllocationEnabled");
 
     if (!policy) {
@@ -255,6 +312,10 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
 
     if (policy.leaveType?.status === false) {
       return sendResponse(res, 400, "Inactive leave type cannot be allocated", null, {});
+    }
+
+    if (policy.leaveType?.allocationCycle !== "quarterly") {
+      return sendResponse(res, 400, "Only quarterly leave types can be allocated from quarterly policy", null, {});
     }
 
     const leaveKey = policy.leaveType?.code;
@@ -295,9 +356,9 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
       organization: policy.organization?._id || policy.organization,
     };
 
-    // Probation leave only Intern employees ne allocate thavi joiye
+    // Probation leave all non-admin employees ne allocate thavi joiye
     if (isProbationLeave) {
-      employeeFilter.employeeType = "Intern";
+      employeeFilter.employeeType = { $ne: "Admin" };
     }
 
     // PL leave Intern ne allocate na thavi joiye
@@ -311,8 +372,8 @@ export const applyQuarterlyLeaveAllocation = async (req, res) => {
     let skipped = 0;
 
     for (const employee of employees) {
-      // extra safety: Probation non-intern ma never allocate na thay
-      if (isProbationLeave && employee.employeeType !== "Intern") {
+      // extra safety: Probation admin ma never allocate na thay
+      if (isProbationLeave && employee.employeeType === "Admin") {
         skipped++;
         continue;
       }

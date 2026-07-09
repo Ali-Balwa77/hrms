@@ -68,10 +68,12 @@ const QuarterlyLeavePolicyForm = () => {
         const list = Array.isArray(data) ? data : [];
 
         setLeaveTypes(
-          list.map((item) => ({
-            value: item._id,
-            label: item.name ? `${item.code} - ${item.name}` : item.code,
-          }))
+          list
+            .filter((item) => item.allocationCycle === 'quarterly')
+            .map((item) => ({
+              value: item._id,
+              label: item.name ? `${item.code} - ${item.name}` : item.code,
+            }))
         );
       } catch (error) {
       console.error('Request failed:', error);
@@ -88,10 +90,12 @@ const QuarterlyLeavePolicyForm = () => {
         const list = Array.isArray(data) ? data : [];
 
         setOrganizations(
-          list.map((item) => ({
-            value: item._id,
-            label: item.code ? `${item.name} (${item.code})` : item.name,
-          }))
+          list
+            .filter((item) => item.quarterlyLeaveAllocationEnabled === true)
+            .map((item) => ({
+              value: item._id,
+              label: item.code ? `${item.name} (${item.code})` : item.name,
+            }))
         );
       } catch (error) {
       console.error('Request failed:', error);

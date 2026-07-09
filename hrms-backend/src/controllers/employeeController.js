@@ -6,10 +6,11 @@ import { sendEmail } from '../utils/mailgun.js';
 import LeaveType from '../models/LeaveType.js';
 import Organization from '../models/Organization.js';
 import { sendResponse } from '../utils/apiResponse.js';
+import { getLeaveBalanceDateRange, getLeaveBalanceDays, isProbationLeaveType } from '../utils/leaveBalancePolicy.js';
 
 
 const EMPLOYEE_LIST_SELECT =
-  "_id employeeNo firstName lastName email officeEmail phone department designation employeeType status joinDate dob organization leaveForwardTo reportingTo punchId leaveBalance createdAt updatedAt";
+  "_id employeeNo firstName lastName email officeEmail phone department designation employeeType status joinDate probationPeriodMonths dob organization leaveForwardTo reportingTo punchId leaveBalance createdAt updatedAt";
 
 const EMPLOYEE_MIN_SELECT =
   "_id employeeNo firstName lastName email officeEmail employeeType status department designation";
@@ -69,35 +70,34 @@ const isQuarterlyLeaveOrg = (organization) =>
   organization?.quarterlyLeaveAllocationEnabled === true;
 
 const isQuarterlyManagedLeaveType = (leaveType) =>
-  String(leaveType?.code || "").toUpperCase() === "PL";
+  leaveType?.allocationCycle === "quarterly";
 
-const getCurrentYearDateRange = () => {
-  const year = new Date().getFullYear();
-
-  return {
-    year,
-    validFrom: new Date(year, 0, 1),
-    validTo: new Date(year, 11, 31),
-  };
+const toDateOnlyString = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
 };
 
-const makeInitialLeaveBalanceObj = (leaveType, organization) => {
+const makeInitialLeaveBalanceObj = (leaveType, organization, employeeData = {}) => {
   const useQuarterlyPolicy =
     isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(organization);
 
   if (useQuarterlyPolicy) return null;
 
-  const yearRange = getCurrentYearDateRange();
+  const dateRange = getLeaveBalanceDateRange(leaveType, employeeData);
+  if (!dateRange) return null;
+  const leaveDays = getLeaveBalanceDays(leaveType, employeeData, dateRange);
 
   return {
     leaveType: leaveType.code,
-    totalLeave: Number(leaveType.totalDays || 0),
-    originalTotalLeave: Number(leaveType.totalDays || 0),
+    totalLeave: leaveDays,
+    originalTotalLeave: leaveDays,
     allocationMode: "normal",
     quarter: null,
-    year: yearRange.year,
-    validFrom: yearRange.validFrom,
-    validTo: yearRange.validTo,
+    year: dateRange.year,
+    validFrom: dateRange.validFrom,
+    validTo: dateRange.validTo,
   };
 };
 
@@ -130,6 +130,10 @@ export const createEmployee = async (req, res) => {
       return sendResponse(res, 400, "Joining Date cannot be in the future!", null, {});
     }
 
+    if (Number(req.body.probationPeriodMonths ?? 6) < 0) {
+      return sendResponse(res, 400, "Probation period cannot be negative", null, {});
+    }
+
     if (req.body.employeeType === "Admin") {
       return sendResponse(res, 400, "Admin cannot be selected as employee type. Assign Admin access from User Access Master.", null, {});
     }
@@ -143,12 +147,10 @@ export const createEmployee = async (req, res) => {
 
     const leaveBalance = leaveTypes
       .filter((leave) => {
-        const leaveCode = String(leave.code || "").toLowerCase().trim();
-        const leaveName = String(leave.name || "").toLowerCase().trim();
-        const isProbationLeave = leaveCode.includes("probation") || leaveName.includes("probation");
+        const isProbationLeave = isProbationLeaveType(leave);
 
         if (isProbationLeave) {
-          return roleName === "Intern";
+          return roleName !== "Admin";
         }
 
         // Quarterly-enabled organizations receive these balances from Quarterly Leave Policy.
@@ -158,7 +160,7 @@ export const createEmployee = async (req, res) => {
 
         return true;
       })
-      .map((leave) => makeInitialLeaveBalanceObj(leave, organization))
+      .map((leave) => makeInitialLeaveBalanceObj(leave, organization, req.body))
       .filter(Boolean);
 
     const newEmployee = new Employee({
@@ -272,7 +274,7 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType, organizati
 
   
   const makeLeaveBalanceObj = (leaveType) => {
-    const balance = makeInitialLeaveBalanceObj(leaveType, organization);
+    const balance = makeInitialLeaveBalanceObj(leaveType, organization, employee);
     return balance ? { ...balance, isActive: leaveType.status === true } : null;
   };
 
@@ -309,12 +311,6 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType, organizati
   
   
   if (employeeType !== "Intern") {
-    
-    employee.leaveBalance = employee.leaveBalance.filter(
-      (leave) => leave.leaveType !== "PROBATION"
-    );
-
-    
     const existingPL = employee.leaveBalance.find(
       (leave) => leave.leaveType === "PL"
     );
@@ -333,7 +329,56 @@ const syncLeaveBalanceByEmployeeType = async (employee, employeeType, organizati
       const balance = makeLeaveBalanceObj(lwpLeave);
       if (balance) employee.leaveBalance.push(balance);
     }
+
+    const existingProbation = employee.leaveBalance.find(
+      (leave) => leave.leaveType === "PROBATION"
+    );
+
+    if (!existingProbation && probationLeave) {
+      const balance = makeLeaveBalanceObj(probationLeave);
+      if (balance) employee.leaveBalance.push(balance);
+    }
   }
+
+  return employee;
+};
+
+const syncProbationLeaveBalance = async (employee, organization) => {
+  if (employee.employeeType === "Admin") {
+    employee.leaveBalance = employee.leaveBalance.filter(
+      (leave) => leave.leaveType !== "PROBATION"
+    );
+    return employee;
+  }
+
+  const probationLeave = await LeaveType.findOne({
+    code: "PROBATION",
+    status: true,
+  });
+
+  if (!probationLeave) return employee;
+
+  const balance = makeInitialLeaveBalanceObj(probationLeave, organization, employee);
+  if (!balance) return employee;
+
+  const existingIndex = employee.leaveBalance.findIndex(
+    (leave) => leave.leaveType === "PROBATION"
+  );
+
+  if (existingIndex === -1) {
+    employee.leaveBalance.push({
+      ...balance,
+      isActive: probationLeave.status === true,
+    });
+    return employee;
+  }
+
+  employee.leaveBalance[existingIndex].year = balance.year;
+  employee.leaveBalance[existingIndex].validFrom = balance.validFrom;
+  employee.leaveBalance[existingIndex].validTo = balance.validTo;
+  employee.leaveBalance[existingIndex].allocationMode = balance.allocationMode;
+  employee.leaveBalance[existingIndex].quarter = balance.quarter;
+  employee.leaveBalance[existingIndex].isActive = probationLeave.status === true;
 
   return employee;
 };
@@ -347,6 +392,13 @@ export const updateEmployee = async (req, res) => {
     if (!existingEmployee) {
       return sendResponse(res, 404, "Employee not found", null, {});
     }
+
+    const joinDateChanged =
+      req.body.joinDate !== undefined &&
+      toDateOnlyString(req.body.joinDate) !== toDateOnlyString(existingEmployee.joinDate);
+
+    const shouldConfirmByJoinDateChange =
+      joinDateChanged && Number(existingEmployee.probationPeriodMonths || 0) > 0;
 
     // ✅ Clean leaveForwardTo array
     if (Array.isArray(updateData.leaveForwardTo)) {
@@ -369,8 +421,35 @@ export const updateEmployee = async (req, res) => {
       );
     }
 
+    const probationConfigChanged =
+      req.body.joinDate !== undefined ||
+      req.body.probationPeriodMonths !== undefined;
+
+    if (req.body.probationPeriodMonths !== undefined && Number(req.body.probationPeriodMonths) < 0) {
+      return sendResponse(res, 400, "Probation period cannot be negative", null, {});
+    }
+
+    if (req.body.joinDate !== undefined) {
+      existingEmployee.joinDate = req.body.joinDate;
+    }
+
+    if (req.body.probationPeriodMonths !== undefined) {
+      existingEmployee.probationPeriodMonths = req.body.probationPeriodMonths;
+    }
+
+    if (shouldConfirmByJoinDateChange) {
+      existingEmployee.probationPeriodMonths = 0;
+      existingEmployee.leaveBalance = existingEmployee.leaveBalance.filter(
+        (leave) => leave.leaveType !== "PROBATION"
+      );
+      updateData.probationPeriodMonths = 0;
+      updateData.leaveBalance = existingEmployee.leaveBalance;
+    }
+
     // ✅ Employee type validation + leave balance sync
     if (req.body.employeeType) {
+      const requestedEmployeeType = req.body.employeeType;
+
       if (req.body.employeeType === "Admin") {
         return sendResponse(
           res,
@@ -381,19 +460,32 @@ export const updateEmployee = async (req, res) => {
         );
       }
 
-      if (req.body.employeeType !== existingEmployee.employeeType) {
+      if (requestedEmployeeType !== existingEmployee.employeeType) {
+        existingEmployee.employeeType = requestedEmployeeType;
+
         const organization = await Organization.findById(
           req.body.organization || existingEmployee.organization
         ).select("quarterlyLeaveAllocationEnabled");
 
         await syncLeaveBalanceByEmployeeType(
           existingEmployee,
-          req.body.employeeType,
+          requestedEmployeeType,
           organization
         );
 
         updateData.leaveBalance = existingEmployee.leaveBalance;
+      } else {
+        existingEmployee.employeeType = requestedEmployeeType;
       }
+    }
+
+    if (probationConfigChanged && !shouldConfirmByJoinDateChange) {
+      const organization = await Organization.findById(
+        req.body.organization || existingEmployee.organization
+      ).select("quarterlyLeaveAllocationEnabled");
+
+      await syncProbationLeaveBalance(existingEmployee, organization);
+      updateData.leaveBalance = existingEmployee.leaveBalance;
     }
 
     // ✅ Old/New employee type check BEFORE update
@@ -442,6 +534,10 @@ export const updateEmployee = async (req, res) => {
 
     if (req.body.officeEmail) {
       userUpdateData.email = req.body.officeEmail;
+    }
+
+    if (req.body.firstName !== undefined || req.body.lastName !== undefined) {
+      userUpdateData.name = `${employee.firstName || ""} ${employee.lastName || ""}`.trim();
     }
 
     await User.findOneAndUpdate(
@@ -629,12 +725,17 @@ export const getTeamLeads = async (req, res) => {
       .lean();
 
     const eligibleEmployeeIds = eligibleUsers
-      .filter((item) =>
-        Array.isArray(item.role?.features) &&
-        (item.role.features.includes("team_employee_list") ||
-          item.role.features.includes("leave_approval_menu") ||
-          item.role.features.includes("reporting_manager_master"))
-      )
+      .filter((item) => {
+        const features = Array.isArray(item.role?.features) ? item.role.features : [];
+        const normalizedRoleName = normalizeRoleName(item.role?.name);
+
+        return (
+          features.includes("team_employee_list") ||
+          features.includes("leave_approval_menu") ||
+          features.includes("reporting_manager_master") ||
+          normalizedRoleName === "ceo"
+        );
+      })
       .map((item) => item.employeeId)
       .filter(Boolean);
 

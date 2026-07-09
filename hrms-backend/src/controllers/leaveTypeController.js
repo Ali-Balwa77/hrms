@@ -2,12 +2,13 @@ import Employee from '../models/Employee.js';
 import LeaveType from '../models/LeaveType.js';
 import { sendResponse } from '../utils/apiResponse.js';
 import LeaveBalanceArchive from "../models/LeaveBalanceArchive.js";
+import { getAdjustedLeaveBalanceDays, getLeaveBalanceDateRange, getLeaveBalanceDays } from "../utils/leaveBalancePolicy.js";
 
 const isQuarterlyLeaveOrg = (organization) =>
   organization?.quarterlyLeaveAllocationEnabled === true;
 
 const isQuarterlyManagedLeaveType = (leaveType) =>
-  String(leaveType?.code || "").toUpperCase() === "PL";
+  leaveType?.allocationCycle === "quarterly";
 
 const getBalanceModeForEmployee = (leaveType, employee) =>
   isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(employee.organization)
@@ -147,19 +148,9 @@ const restoreArchivedLeaveBalance = async ({
   await LeaveBalanceArchive.deleteMany({ leaveType: leaveCode });
 };
 
-const getCurrentYearDateRange = () => {
-  const year = new Date().getFullYear();
-
-  return {
-    year,
-    validFrom: new Date(year, 0, 1),   // Jan 1
-    validTo: new Date(year, 11, 31),   // Dec 31
-  };
-};
-
 const getLeaveTypeEmployeeQuery = (leaveCode) => {
   if (leaveCode === "PROBATION") {
-    return { employeeType: "Intern" };
+    return { employeeType: { $ne: "Admin" } };
   }
 
   if (leaveCode === "LWP") {
@@ -167,6 +158,48 @@ const getLeaveTypeEmployeeQuery = (leaveCode) => {
   }
 
   return { employeeType: { $ne: "Intern" } };
+};
+
+const addMissingActiveLeaveBalances = async ({
+  employeeQuery,
+  oldLeaveCode,
+  leaveType,
+}) => {
+  const leaveCode = leaveType.code;
+  const employees = await Employee.find(employeeQuery)
+    .populate("organization", "quarterlyLeaveAllocationEnabled");
+
+  for (const emp of employees) {
+    const useQuarterlyPolicy =
+      isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(emp.organization);
+
+    if (useQuarterlyPolicy) continue;
+
+    const alreadyExists = emp.leaveBalance.some(
+      (balance) => balance.leaveType === oldLeaveCode || balance.leaveType === leaveCode
+    );
+
+    if (alreadyExists) continue;
+
+    const dateRange = getLeaveBalanceDateRange(leaveType, emp);
+    if (!dateRange) continue;
+    const leaveDays = getLeaveBalanceDays(leaveType, emp, dateRange);
+
+    emp.leaveBalance.push({
+      leaveType: leaveCode,
+      totalLeave: leaveDays,
+      originalTotalLeave: leaveDays,
+      isActive: leaveType.status === true,
+      allocationMode: getBalanceModeForEmployee(leaveType, emp),
+      quarter: null,
+      year: dateRange.year,
+      validFrom: dateRange.validFrom,
+      validTo: dateRange.validTo,
+    });
+
+    emp.markModified("leaveBalance");
+    await emp.save();
+  }
 };
 
 
@@ -210,7 +243,6 @@ export const createLeaveType = async (req, res) => {
 
       const employees = await Employee.find(getLeaveTypeEmployeeQuery(leaveType.code))
         .populate("organization", "quarterlyLeaveAllocationEnabled");
-      const yearRange = getCurrentYearDateRange();
 
       for (const emp of employees) {
         if (isQuarterlyManagedLeaveType(leaveType) && isQuarterlyLeaveOrg(emp.organization)) {
@@ -222,16 +254,19 @@ export const createLeaveType = async (req, res) => {
         );
 
         if (!alreadyExists) {
+          const dateRange = getLeaveBalanceDateRange(leaveType, emp);
+          if (!dateRange) continue;
+          const leaveDays = getLeaveBalanceDays(leaveType, emp, dateRange);
 
           emp.leaveBalance.push({
             leaveType: leaveType.code,
-            totalLeave: leaveType.totalDays,
-            originalTotalLeave: leaveType.totalDays,
+            totalLeave: leaveDays,
+            originalTotalLeave: leaveDays,
             allocationMode: getBalanceModeForEmployee(leaveType, emp),
             quarter: null,
-            year: yearRange.year,
-            validFrom: yearRange.validFrom,
-            validTo: yearRange.validTo,
+            year: dateRange.year,
+            validFrom: dateRange.validFrom,
+            validTo: dateRange.validTo,
           });
 
           await emp.save();
@@ -375,7 +410,7 @@ export const updateLeaveType = async (req, res) => {
 
     if (isProbationLeave) {
       employeeQuery = {
-        employeeType: "Intern",
+        employeeType: { $ne: "Admin" },
       };
     } else if (isLWP) {
       employeeQuery = {};
@@ -394,23 +429,6 @@ export const updateLeaveType = async (req, res) => {
         leaveCode,
       });
 
-      if (isProbationLeave) {
-        await Employee.updateMany(
-          {
-            employeeType: { $ne: "Intern" },
-          },
-          {
-            $pull: {
-              leaveBalance: {
-                leaveType: {
-                  $in: [oldLeaveCode, leaveCode, "PROBATION"],
-                },
-              },
-            },
-          }
-        );
-      }
-
       return sendResponse(
         res,
         200,
@@ -426,6 +444,11 @@ export const updateLeaveType = async (req, res) => {
         employeeQuery,
         oldLeaveCode,
         leaveCode,
+      });
+      await addMissingActiveLeaveBalances({
+        employeeQuery,
+        oldLeaveCode,
+        leaveType,
       });
 
       // ✅ Quarterly and Normal leave ma fresh balance add/update na karvu
@@ -453,18 +476,20 @@ export const updateLeaveType = async (req, res) => {
       if (existingIndex === -1) {
         // Quarterly-enabled org ma policy thi allocate thay; baki org ma annual balance add thay.
         if (!useQuarterlyPolicy) {
-          const yearRange = getCurrentYearDateRange();
+          const dateRange = getLeaveBalanceDateRange(leaveType, emp);
+          if (!dateRange) continue;
+          const leaveDays = getLeaveBalanceDays(leaveType, emp, dateRange);
 
           emp.leaveBalance.push({
             leaveType: leaveCode,
-            totalLeave: Number(leaveType.totalDays || 0),
-            originalTotalLeave: Number(leaveType.totalDays || 0),
+            totalLeave: leaveDays,
+            originalTotalLeave: leaveDays,
             isActive: leaveType.status === true,
             allocationMode: getBalanceModeForEmployee(leaveType, emp),
             quarter: null,
-            year: yearRange.year || null,
-            validFrom: yearRange.validFrom || null,
-            validTo: yearRange.validTo || null,
+            year: dateRange.year || null,
+            validFrom: dateRange.validFrom || null,
+            validTo: dateRange.validTo || null,
           });
         }
       } else {
@@ -485,43 +510,29 @@ export const updateLeaveType = async (req, res) => {
 
         // Normal/non-quarterly-org balances update karva; quarterly policy balances preserve karva.
         if (!useQuarterlyPolicy) {
-          const yearRange = getCurrentYearDateRange();
+          const dateRange = getLeaveBalanceDateRange(leaveType, emp);
+          if (!dateRange) continue;
+          const balanceDays = getAdjustedLeaveBalanceDays(
+            leaveType,
+            emp,
+            existingBalance,
+            dateRange
+          );
           
           emp.leaveBalance[existingIndex].allocationMode =
             getBalanceModeForEmployee(leaveType, emp);
           emp.leaveBalance[existingIndex].quarter = null;
-          emp.leaveBalance[existingIndex].year = yearRange.year;
-          emp.leaveBalance[existingIndex].validFrom = yearRange.validFrom;
-          emp.leaveBalance[existingIndex].validTo = yearRange.validTo;
+          emp.leaveBalance[existingIndex].year = dateRange.year;
+          emp.leaveBalance[existingIndex].validFrom = dateRange.validFrom;
+          emp.leaveBalance[existingIndex].validTo = dateRange.validTo;
 
-          emp.leaveBalance[existingIndex].totalLeave = Number(
-            leaveType.totalDays || 0
-          );
-
-          emp.leaveBalance[existingIndex].originalTotalLeave = Number(
-            leaveType.totalDays || 0
-          );
+          emp.leaveBalance[existingIndex].totalLeave = balanceDays.totalLeave;
+          emp.leaveBalance[existingIndex].originalTotalLeave =
+            balanceDays.originalTotalLeave;
         }
       }
 
       await emp.save();
-    }
-
-    if (isProbationLeave) {
-      await Employee.updateMany(
-        {
-          employeeType: { $ne: "Intern" },
-        },
-        {
-          $pull: {
-            leaveBalance: {
-              leaveType: {
-                $in: [oldLeaveCode, leaveCode, "PROBATION"],
-              },
-            },
-          },
-        }
-      );
     }
 
     if (!isProbationLeave && !isLWP) {

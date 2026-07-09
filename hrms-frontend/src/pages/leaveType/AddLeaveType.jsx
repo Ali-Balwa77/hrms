@@ -2,6 +2,7 @@ import { useFormik } from 'formik';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api.js';
 import FormInput from '../../components/formValidation/FormInput';
+import FormSelect from '../../components/formValidation/FromSelect';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { leaveTypeSchema } from '../../validation/LeaveType.schema';
@@ -29,6 +30,7 @@ const AddLeaveType = () => {
             name: data.name || "",
             code: data.code || "",
             totalDays: data.totalDays || "",
+            allocationCycle: data.allocationCycle || "annual",
           });
         }
       } catch (err) {
@@ -46,6 +48,7 @@ const AddLeaveType = () => {
       name: '',
       code: '',
       totalDays: '',
+      allocationCycle: 'annual',
     },
     enableReinitialize: true,
     validationSchema: leaveTypeSchema(mode),
@@ -107,6 +110,16 @@ const AddLeaveType = () => {
             <FormInput label="Leave Code" name="code" formik={formik} type='text' required />
             <FormInput label="Total Days per Annum" name="totalDays" formik={formik} type='number' required />
           </div>
+          <FormSelect
+            label="Allocation Cycle"
+            name="allocationCycle"
+            formik={formik}
+            options={[
+              { label: "Annual", value: "annual" },
+              { label: "Quarterly", value: "quarterly" },
+            ]}
+            required
+          />
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"

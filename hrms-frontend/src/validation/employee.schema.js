@@ -10,6 +10,7 @@ export const employeeSchema = generateSchema([
   { name: 'phone', type: 'text', required: true, pattern: /^\+\d{1,4}\s?[0-9]{10}$/, patternMessage: "Phone number must include a valid country code and a 10-digit mobile number.",max: 16 },
   { name: 'dob', label:'Date of Birth', type: 'date', required: true },
   { name: 'joinDate', label:'Join Date', type: 'date', required: true },
+  { name: 'probationPeriodMonths', label:'Probation Period Months', type: 'number', required: false, integer: true },
   { name: 'department', label:'Department', type: 'text', required: true },
   { name: 'designation', label:'Designation', type: 'text', required: true },
   { name: 'organization', label:'Organization', type: 'select', required: true },
